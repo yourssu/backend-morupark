@@ -5,3 +5,7 @@ pluginManagement {
 	}
 }
 rootProject.name = "morupark"
+
+include("services-common")
+include("services-auth") 
+include("services-queue")
