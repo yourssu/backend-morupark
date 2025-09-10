@@ -1,11 +1,11 @@
-package com.example.morupark
+package com.yourssu.morupark.auth
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
 @SpringBootApplication
-class MoruparkApplication
+class AuthApplication
 
 fun main(args: Array<String>) {
-	runApplication<MoruparkApplication>(*args)
+    runApplication<AuthApplication>(*args)
 }
