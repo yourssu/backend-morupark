@@ -39,7 +39,7 @@ management:
 
 security:
   jwt:
-    secret: ${JWT_SECRET}
+    secret: thisIsASecretKeyForJWTGenerationChangeMe
     expiration : 864000000 # 24 hours in milliseconds
 
 logging:

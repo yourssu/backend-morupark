@@ -5,7 +5,6 @@ import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys.hmacShaKeyFor
 import java.util.*
 
-
 class JwtUtil(
     secret: String,
     val expiration: Long
