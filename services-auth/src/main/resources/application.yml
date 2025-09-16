@@ -37,6 +37,11 @@ management:
       exposure:
         include: health,info,metrics
 
+security:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration : 864000000 # 24 hours in milliseconds
+
 logging:
   level:
     com.yourssu.morupark: DEBUG
