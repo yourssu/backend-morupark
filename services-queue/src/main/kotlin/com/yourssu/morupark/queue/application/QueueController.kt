@@ -1,6 +1,7 @@
 package com.yourssu.morupark.queue.application
 
 import com.yourssu.morupark.queue.business.QueueService
+import org.apache.el.parser.Token
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -15,8 +16,8 @@ class QueueController(
 ) {
 
     @PostMapping
-    fun post(@RequestHeader userId: Long): ResponseEntity<Void> {
-        queueService.addToQueue(userId)
+    fun post(@RequestHeader accessToken: String): ResponseEntity<Void> {
+        queueService.addToQueue(accessToken)
         return ResponseEntity.accepted().build()
     }
 

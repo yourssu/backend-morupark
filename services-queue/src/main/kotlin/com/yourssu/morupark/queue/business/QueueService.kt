@@ -9,8 +9,9 @@ class QueueService(
 ) {
     private val topic = "TOPIC" // const 필요
 
-    fun addToQueue(userId: Long) {
-        kafkaTemplate.send(topic, userId.toString())
+    fun addToQueue(accessToken: String) {
+
+        kafkaTemplate.send(topic, accessToken)
     }
 
 
