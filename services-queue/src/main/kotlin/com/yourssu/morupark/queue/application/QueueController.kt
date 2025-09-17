@@ -20,7 +20,4 @@ class QueueController(
         queueService.addToQueue(accessToken)
         return ResponseEntity.accepted().build()
     }
-
-
-
 }
