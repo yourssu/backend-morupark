@@ -22,8 +22,8 @@ class QueueController(
     }
 
     @GetMapping
-    fun getTicket(@RequestHeader accessToken: String): ResponseEntity<Void> {
-//        queueService.
-        return ResponseEntity.accepted().build()
+    fun getTicket(@RequestHeader accessToken: String): ResponseEntity<String> {
+        val waitingToken = queueService.getWaitingToken(accessToken)
+        return ResponseEntity.ok().body(waitingToken)
     }
 }
