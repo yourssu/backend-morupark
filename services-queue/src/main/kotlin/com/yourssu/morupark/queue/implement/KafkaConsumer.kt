@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component
 @Component
 class KafkaConsumer(
     private val queueAdapter: QueueAdapter,
+
 ) {
 
     companion object {
@@ -20,6 +21,7 @@ class KafkaConsumer(
         accessToken: String,
         @Header(KafkaHeaders.TIMESTAMP) timestamp: Long,
     ) {
+
         queueAdapter.addToQueue(accessToken, timestamp)
     }
 
