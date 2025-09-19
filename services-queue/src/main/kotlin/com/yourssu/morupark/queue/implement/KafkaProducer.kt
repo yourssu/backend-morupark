@@ -5,11 +5,12 @@ import org.springframework.stereotype.Component
 
 @Component
 class KafkaProducer(
-    private val kafkaTemplate: KafkaTemplate<String, QueueUser>
+    private val kafkaTemplate: KafkaTemplate<String, String>
 ) {
     private val TOPIC: String = "WAITING"
 
-    fun send(message: QueueUser) {
-        kafkaTemplate.send(TOPIC, message)
+    fun send(accessToken: String) {
+        val timestamp = System.currentTimeMillis()
+        kafkaTemplate.send(TOPIC, (timestamp%500).toInt(),timestamp, accessToken, accessToken)
     }
 }

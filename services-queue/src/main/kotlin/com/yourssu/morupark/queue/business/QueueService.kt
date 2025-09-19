@@ -11,6 +11,6 @@ class QueueService(
 ) {
 
     fun enqueue(accessToken: String) {
-        kafkaProducer.send(QueueUser(accessToken))
+        kafkaProducer.send(accessToken)
     }
 }
