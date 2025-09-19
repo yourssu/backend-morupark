@@ -19,8 +19,19 @@ class AuthAdapter(
             }
             .retrieve()
             .bodyToMono(Boolean::class.java)
-            .block() ?: false
+            .block() == true
     }
 
-
+    fun getWaitingToken(accessToken: String): String {
+        return webClientAuth.get()
+            .uri { uriBuilder ->
+                // TODO: 레오에게 이거 엔드포인트 뭔지 물어보기
+                uriBuilder.path("/auth/token")
+                    .queryParam("accessToken", accessToken)
+                    .build()
+            }
+            .retrieve()
+            .bodyToMono(String::class.java)
+            .block() ?: ""
+    }
 }
