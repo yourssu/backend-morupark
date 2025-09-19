@@ -8,4 +8,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-websocket")
 
     implementation("org.springframework.kafka:spring-kafka")
+
+    // Webflux for webClient
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
 }

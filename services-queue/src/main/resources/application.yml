@@ -50,6 +50,10 @@ logging:
 queue:
   max-size: ${QUEUE_MAX_SIZE:1000}
   processing-interval: ${QUEUE_PROCESSING_INTERVAL:5000}
+  kafka:
+    topic: "waiting-topic" # Kafka가 사용할 메시지 채널(토픽) 이름
+  redis:
+    key: "waiting:queue" # Redis 대기자 명단(Sorted Set)의 이름
 
 ---
 spring:
