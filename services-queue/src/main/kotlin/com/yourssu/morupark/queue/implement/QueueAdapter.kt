@@ -12,8 +12,20 @@ class QueueAdapter(
     private val QUEUE_WAITING_KEY = "queue:waiting"
     private val QUEUE_ALLOWED_KEY = "queue:allowed"
 
-    fun addToQueue(accessToken: String, timestamp: Long) {
+    fun addToWaitingQueue(accessToken: String, timestamp: Long) {
         redisTemplate.opsForZSet().add(QUEUE_WAITING_KEY, accessToken, timestamp.toDouble())
+    }
+
+    fun addToAllowedQueue(accessToken: String) {
+        redisTemplate.opsForSet().add(QUEUE_ALLOWED_KEY, accessToken)
+    }
+
+    fun deleteFromWaitingQueue(accessToken: String) {
+        redisTemplate.opsForZSet().remove(QUEUE_WAITING_KEY, accessToken)
+    }
+
+    fun deleteFromAllowedQueue(accessToken: String) {
+        redisTemplate.opsForSet().remove(QUEUE_ALLOWED_KEY, accessToken)
     }
 
     fun isInQueue(accessToken: String) : Boolean {
@@ -22,9 +34,6 @@ class QueueAdapter(
         return score != null
     }
 
-    /**
-     * 지금 내 상태가 ALLOWED인지 WAITING인지 조회
-     */
     fun getTicketStatus(accessToken: String) : TicketStatus {
         val rank = redisTemplate.opsForZSet().rank(QUEUE_WAITING_KEY, accessToken)
         return if (rank != null) TicketStatus.WAITING else TicketStatus.ALLOWED

@@ -22,7 +22,7 @@ class KafkaConsumer(
         @Header(KafkaHeaders.TIMESTAMP) timestamp: Long,
     ) {
 
-        queueAdapter.addToQueue(accessToken, timestamp)
+        queueAdapter.addToWaitingQueue(accessToken, timestamp)
     }
 
 }
