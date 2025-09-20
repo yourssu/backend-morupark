@@ -6,4 +6,8 @@ dependencies {
     
     // WebSocket for real-time notifications
     implementation("org.springframework.boot:spring-boot-starter-websocket")
+
+    implementation("org.springframework.kafka:spring-kafka")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
+    testImplementation("io.projectreactor:reactor-test")
 }
