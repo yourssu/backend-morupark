@@ -30,8 +30,10 @@ class QueueAdapter(
 
     fun isInQueue(accessToken: String) : Boolean {
         val score = redisTemplate.opsForZSet().score(QUEUE_WAITING_KEY, accessToken)
-            ?: redisTemplate.opsForZSet().score(QUEUE_ALLOWED_KEY, accessToken)
-        return score != null
+        if(score != null) {
+            return true
+        }
+        return redisTemplate.opsForSet().isMember(QUEUE_ALLOWED_KEY, accessToken)!!
     }
 
     fun getTicketStatus(accessToken: String) : TicketStatus {
