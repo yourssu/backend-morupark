@@ -12,7 +12,7 @@ class KafkaConsumer(
 ) {
 
     companion object {
-        private const val TAG = "TOPIC"
+        private const val TAG = "WAITING"
         private const val GROUP_ID = "ticketing_group"
     }
 
