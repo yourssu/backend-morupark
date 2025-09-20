@@ -1,6 +1,6 @@
 package com.yourssu.morupark.queue.business
 
-enum class Status {
+enum class TicketStatus {
     WAITING,
     ALLOWED
 }

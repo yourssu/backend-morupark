@@ -1,7 +1,7 @@
 package com.yourssu.morupark.queue.business
 
-data class TicketStatus(
-    val status: Status,
+data class ReadStatusResult(
+    val status: TicketStatus,
     val rank: Long,
     val totalAhead: Long,
     val estimatedWaitingTime: Long
