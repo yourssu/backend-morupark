@@ -31,8 +31,8 @@ class QueueController(
     fun getStatus(
         @RequestHeader("Authorization") accessToken: String,
         @RequestHeader("X-Waiting-Token") waitingToken: String,
-    ): ResponseEntity<String> {
-//        queueService.
-        return ResponseEntity.ok().body("ok")
+    ): ResponseEntity<Any> {
+        val result = queueService.getTicketStatusResult(accessToken, waitingToken)
+        return ResponseEntity.ok().body(result)
     }
 }
