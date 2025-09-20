@@ -26,8 +26,21 @@ class AuthAdapter(
         return webClientAuth.get()
             .uri { uriBuilder ->
                 // TODO: 레오에게 이거 엔드포인트 뭔지 물어보기
-                uriBuilder.path("/auth/token")
+                uriBuilder.path("/auth/waiting-token")
                     .queryParam("accessToken", accessToken)
+                    .build()
+            }
+            .retrieve()
+            .bodyToMono(String::class.java)
+            .block() ?: ""
+    }
+
+    fun getExternalServerToken(waitingToken: String): String {
+        return webClientAuth.get()
+            .uri { uriBuilder ->
+                // TODO: 레오에게 이거 엔드포인트 뭔지 물어보기
+                uriBuilder.path("/auth/external-sever-token")
+                    .queryParam("waitingToken", waitingToken)
                     .build()
             }
             .retrieve()
