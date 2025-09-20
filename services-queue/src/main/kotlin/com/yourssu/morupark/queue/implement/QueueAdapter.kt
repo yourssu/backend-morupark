@@ -16,14 +16,17 @@ class QueueAdapter(
         redisTemplate.opsForZSet().add(QUEUE_WAITING_KEY, accessToken, timestamp.toDouble())
     }
 
-    fun addToAllowedQueue(accessToken: String) {
-        redisTemplate.opsForSet().add(QUEUE_ALLOWED_KEY, accessToken)
+    fun addToAllowedQueue(accessTokens: Set<String>) {
+        redisTemplate.opsForSet().add(QUEUE_ALLOWED_KEY, *accessTokens.toTypedArray())
     }
 
-    fun deleteFromWaitingQueue(accessToken: String) {
-        redisTemplate.opsForZSet().remove(QUEUE_WAITING_KEY, accessToken)
+    fun popFromWaitingQueue(count: Long): Set<String>? {
+        val items = redisTemplate.opsForZSet().range(QUEUE_WAITING_KEY, 0, count - 1)
+        redisTemplate.opsForZSet().remove(QUEUE_WAITING_KEY, items)
+        return items
     }
 
+    // TODO: 클라이언트의 대기상태 api 호출 결과가 ALLOWED일때 사용 필요
     fun deleteFromAllowedQueue(accessToken: String) {
         redisTemplate.opsForSet().remove(QUEUE_ALLOWED_KEY, accessToken)
     }
