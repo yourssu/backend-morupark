@@ -16,14 +16,23 @@ class QueueController(
 ) {
 
     @PostMapping
-    fun post(@RequestHeader accessToken: String): ResponseEntity<Void> {
+    fun post(@RequestHeader("Authorization") accessToken: String): ResponseEntity<Void> {
         queueService.enqueue(accessToken)
         return ResponseEntity.accepted().build()
     }
 
     @GetMapping
-    fun getTicket(@RequestHeader accessToken: String): ResponseEntity<String> {
+    fun getTicket(@RequestHeader("Authorization") accessToken: String): ResponseEntity<String> {
         val waitingToken = queueService.getWaitingToken(accessToken)
         return ResponseEntity.ok().body(waitingToken)
+    }
+
+    @GetMapping("/status")
+    fun getStatus(
+        @RequestHeader("Authorization") accessToken: String,
+        @RequestHeader("X-Waiting-Token") waitingToken: String,
+    ): ResponseEntity<String> {
+//        queueService.
+        return ResponseEntity.ok().body("ok")
     }
 }

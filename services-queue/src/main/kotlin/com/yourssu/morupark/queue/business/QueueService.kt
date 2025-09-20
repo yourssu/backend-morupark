@@ -31,4 +31,7 @@ class QueueService(
         return authAdapter.getWaitingToken(accessToken)
     }
 
+    fun getStatus(accessToken: String, waitingToken: String) : String {
+//        queueAdapter.
+    }
 }
