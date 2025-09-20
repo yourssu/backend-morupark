@@ -10,7 +10,7 @@ class KafkaProducer(
     private val TOPIC: String = "WAITING"
 
     fun send(accessToken: String) {
-        val timestamp = System.currentTimeMillis()
+        val timestamp = System.nanoTime()
         kafkaTemplate.send(TOPIC, (timestamp%500).toInt(),timestamp, accessToken, accessToken)
     }
 }
