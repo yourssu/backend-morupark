@@ -3,13 +3,15 @@ package com.yourssu.morupark.queue.business
 import com.yourssu.morupark.queue.implement.AuthAdapter
 import com.yourssu.morupark.queue.implement.KafkaProducer
 import com.yourssu.morupark.queue.implement.QueueAdapter
+import com.yourssu.morupark.queue.implement.WaitingTimeEstimator
 import org.springframework.stereotype.Service
 
 @Service
 class QueueService(
     private val kafkaProducer: KafkaProducer,
     private val authAdapter: AuthAdapter,
-    private val queueAdapter: QueueAdapter
+    private val queueAdapter: QueueAdapter,
+    private val waitingTimeEstimator: WaitingTimeEstimator
 ) {
 
     fun enqueue(accessToken: String) {
@@ -42,7 +44,8 @@ class QueueService(
 
     private fun getWaitingStatusResult(accessToken: String): ReadWaitingStatusResult {
         val rank = queueAdapter.getRank(accessToken)!!
-        return ReadWaitingStatusResult(TicketStatus.WAITING, rank, 0)
+        val estimatedWaitingTime = waitingTimeEstimator.estimate(rank)
+        return ReadWaitingStatusResult(TicketStatus.WAITING, rank, estimatedWaitingTime)
     }
 
     private fun getAllowedStatusResult(waitingToken: String): ReadAllowedStatusResult {

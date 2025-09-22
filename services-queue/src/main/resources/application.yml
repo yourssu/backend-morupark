@@ -51,6 +51,11 @@ queue:
   max-size: ${QUEUE_MAX_SIZE:1000}
   processing-interval: ${QUEUE_PROCESSING_INTERVAL:5000}
 
+scheduler:
+  allow:
+    count: 1      # 한 번에 입장시키는 인원 수
+    delay: 1000   # 입장 주기 (ms)
+
 ---
 spring:
   config:
