@@ -5,6 +5,11 @@ dependencies {
     api("org.jetbrains.kotlin:kotlin-reflect")
     api("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     api("com.fasterxml.jackson.module:jackson-module-kotlin")
+    testImplementation("org.springframework.boot:spring-boot-starter-test") {
+        exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
+        exclude(group = "org.mockito", module = "mockito-core")
+    }
+    testImplementation("io.mockk:mockk:1.14.5")
 }
 
 // Common 모듈은 실행 가능한 jar를 생성하지 않음
