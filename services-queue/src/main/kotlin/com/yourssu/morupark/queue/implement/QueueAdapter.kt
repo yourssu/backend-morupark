@@ -26,7 +26,6 @@ class QueueAdapter(
         return items
     }
 
-    // TODO: 클라이언트의 대기상태 api 호출 결과가 ALLOWED일때 사용 필요
     fun deleteFromAllowedQueue(accessToken: String) {
         redisTemplate.opsForSet().remove(QUEUE_ALLOWED_KEY, accessToken)
     }
