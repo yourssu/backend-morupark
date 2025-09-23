@@ -42,7 +42,7 @@ class QueueAdapter(
         val rank = redisTemplate.opsForZSet().rank(QUEUE_WAITING_KEY, accessToken)
         if (rank != null) return TicketStatus.WAITING
         val allowed = redisTemplate.opsForSet().isMember(QUEUE_ALLOWED_KEY, accessToken)
-        if (allowed != null) return TicketStatus.ALLOWED
+        if (allowed != null && allowed) return TicketStatus.ALLOWED
         throw IllegalStateException("현재 대기열에 존재하지 않습니다.")
     }
 
