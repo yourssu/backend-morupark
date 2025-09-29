@@ -19,10 +19,16 @@ RUN ./gradlew :services-auth:bootJar --no-daemon
 FROM amazoncorretto:21-alpine
 WORKDIR /app
 
+RUN addgroup -g 1001 -S morupark && \
+    adduser -u 1001 -S authservice -G morupark
+
 COPY --from=build /workspace/services-auth/build/libs/*.jar app.jar
+RUN chown authservice:morupark app.jar
 
 ENV JAVA_OPTS="-Xmx512m -Xms256m"
 ENV SERVER_PORT=8081
+
+USER authservice
 
 EXPOSE $SERVER_PORT
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]
