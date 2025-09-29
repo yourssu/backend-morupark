@@ -1,0 +1,163 @@
+name: Build and Push to ECR
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ap-northeast-2
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-2.amazonaws.com
+  ECR_PREFIX: morupark
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services_auth: ${{ steps.filter.outputs.services_auth }}
+      services_queue: ${{ steps.filter.outputs.services_queue }}
+      version: ${{ steps.version.outputs.version }}
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed modules
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            services_auth:
+              - 'services-auth/**'
+              - 'services-common/**'
+              - 'build.gradle.kts'
+              - 'settings.gradle.kts'
+            services_queue:
+              - 'services-queue/**'
+              - 'services-common/**'
+              - 'build.gradle.kts'
+              - 'settings.gradle.kts'
+
+      - name: Generate version tag from Git SHA
+        id: version
+        run: |
+          SHORT_SHA=$(git rev-parse --short=8 HEAD)
+          VERSION="${SHORT_SHA}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Generated version: ${VERSION}"
+
+      - name: Set matrix for changed modules
+        id: set-matrix
+        run: |
+          modules=()
+          if [[ "${{ steps.filter.outputs.services_auth }}" == "true" ]]; then
+            modules+=("services-auth")
+          fi
+          if [[ "${{ steps.filter.outputs.services_queue }}" == "true" ]]; then
+            modules+=("services-queue")
+          fi
+          if [ ${#modules[@]} -eq 0 ]; then
+            echo "matrix={\"include\":[]}" >> $GITHUB_OUTPUT
+            echo "No modules changed"
+          else
+            matrix_json=$(printf '%s\n' "${modules[@]}" | jq -R . | jq -s -c '{include: map({module: .})}')
+            echo "matrix=${matrix_json}" >> $GITHUB_OUTPUT
+            echo "Changed modules: ${modules[@]}"
+          fi
+
+  build:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.matrix != '{"include":[]}'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
+      fail-fast: false
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Generate Docker tags
+        id: meta
+        run: |
+          tags=""
+          version_tag="${{ env.ECR_REGISTRY }}/${{ env.ECR_PREFIX }}/${{ matrix.module }}:${{ needs.detect-changes.outputs.version }}"
+          tags="$tags$version_tag"
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
+            latest_tag="${{ env.ECR_REGISTRY }}/${{ env.ECR_PREFIX }}/${{ matrix.module }}:latest"
+            tags="$tags\n$latest_tag"
+          fi
+          echo "tags=${tags}" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        id: build-and-push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.module }}/Dockerfile
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha,scope=${{ matrix.module }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.module }}
+          provenance: false
+
+      - name: Print image digest
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          echo "✅ Pushed: ${{ env.ECR_REGISTRY }}/${{ env.ECR_PREFIX }}/${{ matrix.module }}:${{ needs.detect-changes.outputs.version }}"
+          echo "✅ Pushed: ${{ env.ECR_REGISTRY }}/${{ env.ECR_PREFIX }}/${{ matrix.module }}:latest"
+
+  summary:
+    needs: [detect-changes, build]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate build summary
+        run: |
+          echo "## Build and Push Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Event**: `${{ github.event_name }}`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: `${{ github.ref_name }}`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: `${{ needs.detect-changes.outputs.version }}`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Module Build Status" >> $GITHUB_STEP_SUMMARY
+          echo "| Module | Changed | Build Triggered |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|---|" >> $GITHUB_STEP_SUMMARY
+
+          matrix_modules='${{ needs.detect-changes.outputs.matrix }}'
+          auth_triggered=$(echo "$matrix_modules" | jq 'if (.include | map(.module) | index("services-auth")) then "✅" else "➖" end' -r)
+          queue_triggered=$(echo "$matrix_modules" | jq 'if (.include | map(.module) | index("services-queue")) then "✅" else "➖" end' -r)
+
+          echo "| \`services-auth\` | **${{ needs.detect-changes.outputs.services_auth }}** | $auth_triggered |" >> $GITHUB_STEP_SUMMARY
+          echo "| \`services-queue\` | **${{ needs.detect-changes.outputs.services_queue }}** | $queue_triggered |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Overall Build Job Result" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ needs.detect-changes.outputs.matrix }}" != "{\"include\":[]}" ]]; then
+            build_result="${{ needs.build.result }}"
+            if [[ "$build_result" == "success" ]]; then
+              echo "✅ **Success**: All triggered builds completed successfully." >> $GITHUB_STEP_SUMMARY
+            elif [[ "$build_result" == "failure" ]]; then
+              echo "❌ **Failure**: At least one build failed." >> $GITHUB_STEP_SUMMARY
+            else
+              echo "⚠️ **${build_result}**: The build job finished with a status of '${build_result}'." >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "- **Skipped**: No changes detected that would trigger a build." >> $GITHUB_STEP_SUMMARY
+          fi
