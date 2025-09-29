@@ -2,18 +2,19 @@
 FROM gradle:jdk21-corretto AS build
 WORKDIR /workspace
 
-COPY gradle gradle
-COPY gradlew .
 COPY settings.gradle.kts .
 COPY build.gradle.kts .
 
 COPY services-common/build.gradle.kts services-common/
+COPY services-auth/build.gradle.kts services-auth/
 COPY services-queue/build.gradle.kts services-queue/
-RUN ./gradlew dependencies --no-daemon
+
+RUN gradle dependencies --no-daemon --parallel
 
 COPY services-common/src services-common/src
 COPY services-queue/src services-queue/src
-RUN ./gradlew :services-queue:bootJar --no-daemon
+
+RUN gradle :services-queue:bootJar --no-daemon --parallel
 
 # Deployment stage
 FROM amazoncorretto:21-alpine
