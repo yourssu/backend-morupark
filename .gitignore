@@ -233,8 +233,6 @@ application-*.properties
 *.sqlite
 *.sqlite3
 
-# Docker
-.dockerignore
 
 # Kubernetes
 *.yaml.bak
