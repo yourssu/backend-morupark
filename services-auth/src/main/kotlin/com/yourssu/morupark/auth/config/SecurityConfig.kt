@@ -13,11 +13,11 @@ class SecurityConfig {
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http.csrf { csrf ->
-            csrf.ignoringRequestMatchers("/external-servers/**")
+            csrf.ignoringRequestMatchers("/**")
         }
         .authorizeHttpRequests { requests ->
             requests
-                .requestMatchers("/external-servers/**").permitAll()
+                .requestMatchers("/**").permitAll()
                 .anyRequest().authenticated()
         }
 
