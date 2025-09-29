@@ -21,7 +21,7 @@ FROM amazoncorretto:21-alpine
 WORKDIR /app
 
 RUN addgroup -g 1001 -S morupark && \
-    adduser -u 1001 -S queueservice -G morupark
+    adduser -u 1001 -S queueservice -G morupark --no-create-home --disabled-password
 
 COPY --from=build /workspace/services-queue/build/libs/*.jar app.jar
 RUN chown queueservice:morupark app.jar

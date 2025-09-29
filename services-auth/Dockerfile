@@ -21,7 +21,7 @@ FROM amazoncorretto:21-alpine
 WORKDIR /app
 
 RUN addgroup -g 1001 -S morupark && \
-    adduser -u 1001 -S authservice -G morupark
+    adduser -u 1001 -S authservice -G morupark --no-create-home --disabled-password
 
 COPY --from=build /workspace/services-auth/build/libs/*.jar app.jar
 RUN chown authservice:morupark app.jar
