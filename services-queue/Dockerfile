@@ -8,10 +8,10 @@ COPY settings.gradle.kts .
 COPY build.gradle.kts .
 
 COPY services-common/build.gradle.kts services-common/
-COPY services-auth/build.gradle.kts services-auth/
 COPY services-queue/build.gradle.kts services-queue/
 RUN ./gradlew dependencies --no-daemon || true
 
+COPY services-common/src services-common/src
 COPY services-queue/src services-queue/src
 RUN ./gradlew :services-queue:bootJar --no-daemon
 
