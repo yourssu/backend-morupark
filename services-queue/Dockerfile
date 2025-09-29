@@ -9,7 +9,7 @@ COPY build.gradle.kts .
 
 COPY services-common/build.gradle.kts services-common/
 COPY services-queue/build.gradle.kts services-queue/
-RUN ./gradlew dependencies --no-daemon || true
+RUN ./gradlew dependencies --no-daemon
 
 COPY services-common/src services-common/src
 COPY services-queue/src services-queue/src

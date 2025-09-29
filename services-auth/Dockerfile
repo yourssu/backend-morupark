@@ -9,7 +9,7 @@ COPY build.gradle.kts .
 
 COPY services-common/build.gradle.kts services-common/
 COPY services-auth/build.gradle.kts services-auth/
-RUN ./gradlew dependencies --no-daemon || true
+RUN ./gradlew dependencies --no-daemon
 
 COPY services-common/src services-common/src
 COPY services-auth/src services-auth/src
