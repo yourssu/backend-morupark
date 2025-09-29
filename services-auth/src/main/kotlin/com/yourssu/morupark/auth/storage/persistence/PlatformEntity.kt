@@ -4,6 +4,7 @@ import com.yourssu.morupark.auth.implement.domain.Platform
 import jakarta.persistence.*
 
 @Entity
+@Table(name = "platform")
 class PlatformEntity(
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
