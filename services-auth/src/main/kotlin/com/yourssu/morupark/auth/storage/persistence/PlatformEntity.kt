@@ -13,8 +13,8 @@ class PlatformEntity(
     @Column(name = "name", nullable = false)
     val name: String,
 
-    @Column(name = "redirect_uri", nullable = false)
-    val redirectUri: String,
+    @Column(name = "redirect_url", nullable = false)
+    val redirectUrl: String,
 
     @Column(name = "secret_key", nullable = false)
     val secretKey: String,
@@ -24,7 +24,7 @@ class PlatformEntity(
             return PlatformEntity(
                 id = platform.id,
                 name = platform.name,
-                redirectUri = platform.redirectUri,
+                redirectUrl = platform.redirectUrl,
                 secretKey = platform.secretKey,
             )
         }
@@ -34,7 +34,7 @@ class PlatformEntity(
         return Platform(
             id = id!!,
             name = name,
-            redirectUri = redirectUri,
+            redirectUrl = redirectUrl,
             secretKey = secretKey,
         )
     }

@@ -4,12 +4,12 @@ import com.yourssu.morupark.auth.business.command.PlatformRegisterCommand
 
 class PlatformRegisterRequest (
     val name: String,
-    val redirectUri: String,
+    val redirectUrl: String,
 ) {
     fun toCommand(): PlatformRegisterCommand {
         return PlatformRegisterCommand(
             name = name,
-            redirectUri = redirectUri,
+            redirectUrl = redirectUrl,
         )
     }
 }
