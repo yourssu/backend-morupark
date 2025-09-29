@@ -25,4 +25,4 @@ ENV JAVA_OPTS="-Xmx512m -Xms256m"
 ENV SERVER_PORT=8082
 
 EXPOSE $SERVER_PORT
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]
