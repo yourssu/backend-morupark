@@ -73,6 +73,7 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.matrix != '{"include":[]}'
     runs-on: ubuntu-latest
+    environment: prod
     strategy:
       matrix: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
       fail-fast: false
