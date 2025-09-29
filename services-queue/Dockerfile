@@ -13,7 +13,7 @@ COPY services-queue/build.gradle.kts services-queue/
 RUN ./gradlew dependencies --no-daemon || true
 
 COPY services-queue/src services-queue/src
-RUN ./gradlew :services-auth:bootJar --no-daemon
+RUN ./gradlew :services-queue:bootJar --no-daemon
 
 # Deployment stage
 FROM amazoncorretto:21-alpine
@@ -22,5 +22,7 @@ WORKDIR /app
 COPY --from=build /workspace/services-queue/build/libs/*.jar app.jar
 
 ENV JAVA_OPTS="-Xmx512m -Xms256m"
-EXPOSE 8080
+ENV SERVER_PORT=8082
+
+EXPOSE $SERVER_PORT
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
