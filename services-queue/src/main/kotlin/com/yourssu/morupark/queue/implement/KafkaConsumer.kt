@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
 class KafkaConsumer(
     private val queueAdapter: QueueAdapter,
 
-) {
+    ) {
 
     companion object {
         private const val TAG = "WAITING"

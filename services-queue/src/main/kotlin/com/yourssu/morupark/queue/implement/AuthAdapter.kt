@@ -5,12 +5,12 @@ import org.springframework.web.reactive.function.client.WebClient
 
 @Component
 class AuthAdapter(
-    private val webClient : WebClient.Builder
+    webClient: WebClient.Builder
 ) {
     private val AUTH_SERVICE_URL = "http://localhost:8081"
     private val webClientAuth = webClient.baseUrl(AUTH_SERVICE_URL).build()
 
-    fun isTokenValid(accessToken: String) : Boolean {
+    fun isTokenValid(accessToken: String): Boolean {
         return webClientAuth.get()
             .uri { uriBuilder ->
                 uriBuilder.path("/auth/token")

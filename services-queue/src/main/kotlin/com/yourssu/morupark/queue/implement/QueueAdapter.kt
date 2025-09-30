@@ -30,15 +30,15 @@ class QueueAdapter(
         redisTemplate.opsForSet().remove(QUEUE_ALLOWED_KEY, accessToken)
     }
 
-    fun isInQueue(accessToken: String) : Boolean {
+    fun isInQueue(accessToken: String): Boolean {
         val score = redisTemplate.opsForZSet().score(QUEUE_WAITING_KEY, accessToken)
-        if(score != null) {
+        if (score != null) {
             return true
         }
         return redisTemplate.opsForSet().isMember(QUEUE_ALLOWED_KEY, accessToken)!!
     }
 
-    fun getTicketStatus(accessToken: String) : TicketStatus {
+    fun getTicketStatus(accessToken: String): TicketStatus {
         val rank = redisTemplate.opsForZSet().rank(QUEUE_WAITING_KEY, accessToken)
         if (rank != null) return TicketStatus.WAITING
         val allowed = redisTemplate.opsForSet().isMember(QUEUE_ALLOWED_KEY, accessToken)
@@ -46,7 +46,7 @@ class QueueAdapter(
         throw IllegalStateException("현재 대기열에 존재하지 않습니다.")
     }
 
-    fun getRank(accessToken: String) : Long? {
+    fun getRank(accessToken: String): Long? {
         return redisTemplate.opsForZSet().rank(QUEUE_WAITING_KEY, accessToken)
     }
 }

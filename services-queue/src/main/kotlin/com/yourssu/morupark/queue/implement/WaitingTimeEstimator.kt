@@ -12,9 +12,9 @@ class WaitingTimeEstimator(
     private val intervalInMillis: Long,
 ) {
     fun estimateWaitingTime(rank: Long): Long {
-       val groupAhead = rank / maxSize
-       val intervalInSeconds = intervalInMillis / 1000.0
-       return (groupAhead * intervalInSeconds).toLong()
+        val groupAhead = rank / maxSize
+        val intervalInSeconds = intervalInMillis / 1000.0
+        return (groupAhead * intervalInSeconds).toLong()
     }
 
 }

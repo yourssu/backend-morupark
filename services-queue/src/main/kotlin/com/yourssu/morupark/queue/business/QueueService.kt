@@ -33,9 +33,9 @@ class QueueService(
         return authAdapter.getWaitingToken(accessToken)
     }
 
-    fun getTicketStatusResult (accessToken: String, waitingToken: String): Any {
+    fun getTicketStatusResult(accessToken: String, waitingToken: String): Any {
         val ticketStatus = queueAdapter.getTicketStatus(accessToken)
-        if(ticketStatus == TicketStatus.ALLOWED) {
+        if (ticketStatus == TicketStatus.ALLOWED) {
             queueAdapter.deleteFromAllowedQueue(accessToken)
             return getAllowedStatusResult(waitingToken)
         }

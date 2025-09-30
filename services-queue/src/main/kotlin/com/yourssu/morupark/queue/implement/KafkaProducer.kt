@@ -11,6 +11,6 @@ class KafkaProducer(
 
     fun send(accessToken: String) {
         val timestamp = System.nanoTime()
-        kafkaTemplate.send(TOPIC, (timestamp%500).toInt(),timestamp, accessToken, accessToken)
+        kafkaTemplate.send(TOPIC, (timestamp % 500).toInt(), timestamp, accessToken, accessToken)
     }
 }

@@ -3,7 +3,6 @@ package com.yourssu.morupark.queue.implement
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
-import kotlin.math.max
 
 @Component
 class StatusOperator(
@@ -11,8 +10,8 @@ class StatusOperator(
 
     @Value("\${queue.max-size}")
     private val maxSize: Long,
-    
-) {
+
+    ) {
 
     /**
      * 시간당 상태를 Waiting -> Allowed로 바꿔준다.
