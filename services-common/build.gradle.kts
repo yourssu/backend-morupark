@@ -5,7 +5,6 @@ dependencies {
     api("org.jetbrains.kotlin:kotlin-reflect")
     api("org.jetbrains.kotlin:kotlin-stdlib")
     api("com.fasterxml.jackson.module:jackson-module-kotlin")
-
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 }
 

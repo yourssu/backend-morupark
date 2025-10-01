@@ -48,8 +48,8 @@ logging:
     com.yourssu.morupark: DEBUG
 
 queue:
-  max-size: ${QUEUE_MAX_SIZE:1000}
-  processing-interval: ${QUEUE_PROCESSING_INTERVAL:5000}
+  max-size: ${QUEUE_MAX_SIZE:1}
+  processing-interval: ${QUEUE_PROCESSING_INTERVAL:1000}
 
 ---
 spring:
