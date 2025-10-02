@@ -100,14 +100,13 @@ jobs:
       - name: Generate Docker tags
         id: meta
         run: |
-          tags=""
-          version_tag="${{ env.ECR_REGISTRY }}/${{ env.ECR_PREFIX }}/${{ matrix.module }}:${{ needs.detect-changes.outputs.version }}"
-          tags="$tags$version_tag"
-          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
-            latest_tag="${{ env.ECR_REGISTRY }}/${{ env.ECR_PREFIX }}/${{ matrix.module }}:latest"
-            tags="$tags\n$latest_tag"
-          fi
-          echo "tags=${tags}" >> $GITHUB_OUTPUT
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
+          sha_tag="${{ env.ECR_REGISTRY }}/${{ env.ECR_PREFIX }}/${{ matrix.module }}:${SHORT_SHA}"
+          latest_tag="${{ env.ECR_REGISTRY }}/${{ env.ECR_PREFIX }}/${{ matrix.module }}:latest"
+          echo "tags<<EOF" >> $GITHUB_OUTPUT
+          echo "$sha_tag" >> $GITHUB_OUTPUT
+          echo "$latest_tag" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image
         id: build-and-push
