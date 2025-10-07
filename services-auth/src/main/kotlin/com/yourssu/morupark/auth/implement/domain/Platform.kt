@@ -5,14 +5,14 @@ import java.util.*
 class Platform(
     val id: Long? = null,
     val name: String,
-    val redirectUri: String,
+    val redirectUrl: String,
     val secretKey: String,
 ) {
     companion object {
-        fun create(name: String, redirectUri: String): Platform {
+        fun create(name: String, redirectUrl: String): Platform {
             return Platform(
                 name = name,
-                redirectUri = redirectUri,
+                redirectUrl = redirectUrl,
                 secretKey = UUID.randomUUID().toString(),
             )
         }
