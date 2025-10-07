@@ -5,4 +5,5 @@ import com.yourssu.morupark.auth.implement.domain.Platform
 interface PlatformRepository {
     fun save(platform: Platform): Platform
     fun getByName(name: String): Platform
+    fun getById(platformId: Long): Platform
 }
