@@ -4,4 +4,5 @@ import com.yourssu.morupark.auth.implement.domain.User
 
 interface UserRepository {
     fun save(user: User): User
+    fun getById(userId: Long): User
 }

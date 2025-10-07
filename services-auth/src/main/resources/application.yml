@@ -41,6 +41,8 @@ security:
   jwt:
     secret: thisIsASecretKeyForJWTGenerationChangeMe
     expiration : 864000000 # 24 hours in milliseconds
+  admin:
+    admin-key: ${ADMIN_KEY:defaultAdminKey}
 
 logging:
   level:
