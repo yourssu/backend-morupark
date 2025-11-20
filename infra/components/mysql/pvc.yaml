@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-backup-pvc
+  namespace: morupark
+  labels:
+    app.kubernetes.io/name: mysql-backup
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: morupark-msa
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: ""  # Will use default storage class
