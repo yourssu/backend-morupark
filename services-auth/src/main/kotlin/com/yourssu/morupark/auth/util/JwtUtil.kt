@@ -27,6 +27,7 @@ class JwtUtil(
             Jwts.parser()
                 .verifyWith(secretKey)
                 .build()
+                .parseSignedClaims(token)
         } catch (_: JwtException) {
             return false
         }
