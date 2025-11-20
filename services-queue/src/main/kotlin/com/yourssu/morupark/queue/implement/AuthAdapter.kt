@@ -26,7 +26,6 @@ class AuthAdapter(
     fun getWaitingToken(accessToken: String): String {
         return webClientAuth.get()
             .uri { uriBuilder ->
-                // TODO: 레오에게 이거 엔드포인트 뭔지 물어보기
                 uriBuilder.path("/auth/waiting-token")
                     .queryParam("accessToken", accessToken)
                     .build()
@@ -39,8 +38,7 @@ class AuthAdapter(
     fun getExternalServerToken(waitingToken: String): String {
         return webClientAuth.get()
             .uri { uriBuilder ->
-                // TODO: 레오에게 이거 엔드포인트 뭔지 물어보기
-                uriBuilder.path("/auth/external-sever-token")
+                uriBuilder.path("/platforms/url")
                     .queryParam("waitingToken", waitingToken)
                     .build()
             }

@@ -35,40 +35,50 @@ class QueueServiceTest {
     private val accessToken = "valid-access-token"
     private val waitingToken = "waiting-token"
     private val externalServerToken = "external-server-token"
+    private val platformId = 1L
+    private val platformName = "test-platform"
+    private val tps = 100L
+
+    private fun createUserInfo(): UserInfo {
+        return UserInfo(
+            userId = 1L,
+            platform = PlatformInfo(platformId, platformName, tps)
+        )
+    }
 
     @Test
     fun `유효한 토큰으로 큐에 등록한다`() {
         // given
-        every { authAdapter.isTokenValid(accessToken) } returns true
+        every { authAdapter.getUserInfo(accessToken) } returns createUserInfo()
         every { kafkaProducer.send(accessToken) } just runs
 
         // when
         queueService.enqueue(accessToken)
 
         // then
-        verify { authAdapter.isTokenValid(accessToken) }
+        verify { authAdapter.getUserInfo(accessToken) }
         verify { kafkaProducer.send(accessToken) }
     }
 
     @Test
     fun `유효하지 않은 토큰으로 큐 등록 시 예외가 발생한다`() {
         // given
-        every { authAdapter.isTokenValid(accessToken) } returns false
+        every { authAdapter.getUserInfo(accessToken) } throws IllegalStateException("Failed to get user info")
 
         // when & then
         val exception = assertFailsWith<IllegalStateException> {
             queueService.enqueue(accessToken)
         }
-        assertEquals("Access token is invalid", exception.message)
-        verify { authAdapter.isTokenValid(accessToken) }
+        assertEquals("Failed to get user info", exception.message)
+        verify { authAdapter.getUserInfo(accessToken) }
         verify(exactly = 0) { kafkaProducer.send(any()) }
     }
 
     @Test
     fun `유효한 토큰과 큐에 있는 사용자의 대기 토큰을 반환한다`() {
         // given
-        every { authAdapter.isTokenValid(accessToken) } returns true
-        every { queueAdapter.isInQueue(accessToken) } returns true
+        every { authAdapter.getUserInfo(accessToken) } returns createUserInfo()
+        every { queueAdapter.isInQueue(accessToken, platformId) } returns true
         every { authAdapter.getWaitingToken(accessToken) } returns waitingToken
 
         // when
@@ -76,47 +86,48 @@ class QueueServiceTest {
 
         // then
         assertEquals(waitingToken, result)
-        verify { authAdapter.isTokenValid(accessToken) }
-        verify { queueAdapter.isInQueue(accessToken) }
+        verify { authAdapter.getUserInfo(accessToken) }
+        verify { queueAdapter.isInQueue(accessToken, platformId) }
         verify { authAdapter.getWaitingToken(accessToken) }
     }
 
     @Test
     fun `유효하지 않은 토큰으로 대기 토큰 요청 시 예외가 발생한다`() {
         // given
-        every { authAdapter.isTokenValid(accessToken) } returns false
+        every { authAdapter.getUserInfo(accessToken) } throws IllegalStateException("Failed to get user info")
 
         // when & then
         val exception = assertFailsWith<IllegalStateException> {
             queueService.getWaitingToken(accessToken)
         }
-        assertEquals("Access token is invalid", exception.message)
-        verify { authAdapter.isTokenValid(accessToken) }
-        verify(exactly = 0) { queueAdapter.isInQueue(any()) }
+        assertEquals("Failed to get user info", exception.message)
+        verify { authAdapter.getUserInfo(accessToken) }
+        verify(exactly = 0) { queueAdapter.isInQueue(any(), any()) }
         verify(exactly = 0) { authAdapter.getWaitingToken(any()) }
     }
 
     @Test
     fun `큐에 없는 사용자의 대기 토큰 요청 시 예외가 발생한다`() {
         // given
-        every { authAdapter.isTokenValid(accessToken) } returns true
-        every { queueAdapter.isInQueue(accessToken) } returns false
+        every { authAdapter.getUserInfo(accessToken) } returns createUserInfo()
+        every { queueAdapter.isInQueue(accessToken, platformId) } returns false
 
         // when & then
         val exception = assertFailsWith<IllegalStateException> {
             queueService.getWaitingToken(accessToken)
         }
         assertEquals("Access token is not in queue", exception.message)
-        verify { authAdapter.isTokenValid(accessToken) }
-        verify { queueAdapter.isInQueue(accessToken) }
+        verify { authAdapter.getUserInfo(accessToken) }
+        verify { queueAdapter.isInQueue(accessToken, platformId) }
         verify(exactly = 0) { authAdapter.getWaitingToken(any()) }
     }
 
     @Test
     fun `ALLOWED 상태인 사용자는 허용된 상태 결과를 반환한다`() {
         // given
-        every { queueAdapter.getTicketStatus(accessToken) } returns TicketStatus.ALLOWED
-        every { queueAdapter.deleteFromAllowedQueue(accessToken) } just runs
+        every { authAdapter.getUserInfo(accessToken) } returns createUserInfo()
+        every { queueAdapter.getTicketStatus(accessToken, platformId) } returns TicketStatus.ALLOWED
+        every { queueAdapter.deleteFromAllowedQueue(accessToken, platformId) } just runs
         every { authAdapter.getExternalServerToken(waitingToken) } returns externalServerToken
 
         // when
@@ -127,8 +138,9 @@ class QueueServiceTest {
         assertEquals(TicketStatus.ALLOWED, result.status)
         assertEquals(externalServerToken, result.externalServerToken)
 
-        verify { queueAdapter.getTicketStatus(accessToken) }
-        verify { queueAdapter.deleteFromAllowedQueue(accessToken) }
+        verify { authAdapter.getUserInfo(accessToken) }
+        verify { queueAdapter.getTicketStatus(accessToken, platformId) }
+        verify { queueAdapter.deleteFromAllowedQueue(accessToken, platformId) }
         verify { authAdapter.getExternalServerToken(waitingToken) }
     }
 
@@ -137,8 +149,9 @@ class QueueServiceTest {
         // given
         val rank = 10L
         val estimatedWaitingTime = 300L
-        every { queueAdapter.getTicketStatus(accessToken) } returns TicketStatus.WAITING
-        every { queueAdapter.getRank(accessToken) } returns rank
+        every { authAdapter.getUserInfo(accessToken) } returns createUserInfo()
+        every { queueAdapter.getTicketStatus(accessToken, platformId) } returns TicketStatus.WAITING
+        every { queueAdapter.getRank(accessToken, platformId) } returns rank
         every { waitingTimeEstimator.estimateWaitingTime(rank) } returns estimatedWaitingTime
 
         // when
@@ -150,9 +163,10 @@ class QueueServiceTest {
         assertEquals(rank, result.rank)
         assertEquals(estimatedWaitingTime, result.estimatedWaitingTime)
 
-        verify { queueAdapter.getTicketStatus(accessToken) }
-        verify { queueAdapter.getRank(accessToken) }
+        verify { authAdapter.getUserInfo(accessToken) }
+        verify { queueAdapter.getTicketStatus(accessToken, platformId) }
+        verify { queueAdapter.getRank(accessToken, platformId) }
         verify { waitingTimeEstimator.estimateWaitingTime(rank) }
-        verify(exactly = 0) { queueAdapter.deleteFromAllowedQueue(any()) }
+        verify(exactly = 0) { queueAdapter.deleteFromAllowedQueue(any(), any()) }
     }
 }
