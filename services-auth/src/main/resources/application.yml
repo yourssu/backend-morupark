@@ -40,7 +40,8 @@ management:
 security:
   jwt:
     secret: thisIsASecretKeyForJWTGenerationChangeMe
-    expiration : 864000000 # 24 hours in milliseconds
+    access-token-expiration: 86400000 # 24 hours in milliseconds
+    refresh-token-expiration: 604800000 # 7 days in milliseconds
 
 logging:
   level:

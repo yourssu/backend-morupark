@@ -16,6 +16,12 @@ class PlatformRepositoryImpl(
             .toDomain()
     }
 
+    override fun getById(id: Long): Platform {
+        return platformJpaRepository.findById(id)
+            .orElseThrow { NoSuchElementException("No platform with id: $id") }
+            .toDomain()
+    }
+
     override fun getByName(name: String): Platform {
         return platformJpaRepository.findByName(name)
             ?.toDomain()

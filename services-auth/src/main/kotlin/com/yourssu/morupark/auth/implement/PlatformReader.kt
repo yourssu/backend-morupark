@@ -10,4 +10,8 @@ class PlatformReader(
     fun getByName(name: String): Platform {
         return platformRepository.getByName(name)
     }
+
+    fun getById(id: Long): Platform {
+        return platformRepository.getById(id)
+    }
 }
