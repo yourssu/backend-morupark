@@ -10,4 +10,6 @@ dependencies {
     implementation("org.springframework.kafka:spring-kafka")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     testImplementation("io.projectreactor:reactor-test")
+
+    testImplementation("io.mockk:mockk:1.13.8")
 }
