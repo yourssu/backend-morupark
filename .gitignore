@@ -256,3 +256,24 @@ application-*.properties
 # Local development
 local/
 *.local
+
+
+# 로컬 테라폼 작업 디렉토리 (플러그인 및 캐시)
+.terraform/
+
+# 테라폼 상태 파일 (가장 중요: 보안상 절대 커밋 금지)
+*.tfstate
+*.tfstate.backup
+
+# 변수 할당 파일 (민감한 값이 들어가는 곳)
+*.tfvars
+*.tfvars.json
+
+# 변수 및 설정 재정의 파일
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# .env 파일 등 환경 변수 파일
+.env
