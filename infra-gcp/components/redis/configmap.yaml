@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: morupark
+  labels:
+    app.kubernetes.io/name: redis-config
+    app.kubernetes.io/component: cache
+    app.kubernetes.io/part-of: morupark-msa
+data:
+  redis.conf: |
+    # Network
+    bind 0.0.0.0
+    port 6379
+    protected-mode no
+    
+    # General
+    daemonize no
+    pidfile /var/run/redis.pid
+    loglevel notice
+    
+    # Persistence
+    save 900 1
+    save 300 10
+    save 60 10000
+    
+    # Memory management
+    maxmemory 128mb
+    maxmemory-policy allkeys-lru
+    
+    # Security: Password is now passed via command-line argument
+    # requirepass is intentionally omitted here

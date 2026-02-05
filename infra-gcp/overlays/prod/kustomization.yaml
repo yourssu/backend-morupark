@@ -1,0 +1,51 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: morupark-prod
+
+namespace: morupark-prod
+
+bases:
+  - ../../base
+
+resources:
+  - namespace.yaml
+  - ../../components/auth-service
+  - ../../components/queue-service
+  - ../../components/redis
+  - ../../components/kafka
+  - ingress.yaml
+
+patches:
+  - path: configmap-patch.yaml
+    target:
+      kind: ConfigMap
+      name: morupark-config
+  - path: auth-service-patch.yaml
+    target:
+      kind: Deployment
+      name: auth-service
+  - path: queue-service-patch.yaml
+    target:
+      kind: Deployment
+      name: queue-service
+  - path: auth-hpa-patch.yaml
+    target:
+      kind: HorizontalPodAutoscaler
+      name: auth-service-hpa
+  - path: queue-hpa-patch.yaml
+    target:
+      kind: HorizontalPodAutoscaler
+      name: queue-service-hpa
+
+labels:
+  - pairs:
+      environment: production
+      app.kubernetes.io/instance: morupark-prod
+
+images:
+  - name: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/auth-service
+    newTag: v1.0.0
+  - name: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/queue-service
+    newTag: v1.0.0

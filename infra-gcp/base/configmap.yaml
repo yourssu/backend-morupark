@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: morupark-config
+  namespace: morupark
+  labels:
+    app.kubernetes.io/name: morupark-config
+    app.kubernetes.io/part-of: morupark-msa
+data:
+  # Common environment variables
+  SPRING_PROFILES_ACTIVE: "dev"
+  
+  # Kafka configuration
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+  
+  # Redis configuration  
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  
+  # JVM options
+  JAVA_OPTS: "-Xmx512m -Xms256m"
+  
+  # Queue configuration
+  QUEUE_MAX_SIZE: "1000"
+  QUEUE_PROCESSING_INTERVAL: "5000"
