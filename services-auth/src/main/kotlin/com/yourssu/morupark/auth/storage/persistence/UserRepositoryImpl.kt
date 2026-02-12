@@ -13,6 +13,12 @@ class UserRepositoryImpl(
         val entity = UserEntity.from(user)
         return userJpaRepository.save(entity).toDomain()
     }
+
+    override fun getById(userId: Long): User {
+        return userJpaRepository.findById(userId)
+            .orElseThrow { NoSuchElementException("No user with id: $userId") }
+            .toDomain()
+    }
 }
 
 interface UserJpaRepository: JpaRepository<UserEntity, Long>

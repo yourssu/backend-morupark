@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component
 @Component
 class KafkaConsumer(
     private val queueAdapter: QueueAdapter,
-
-    ) {
+    private val authAdapter: AuthAdapter,
+) {
 
     companion object {
         private const val TAG = "WAITING"
@@ -21,8 +21,11 @@ class KafkaConsumer(
         accessToken: String,
         @Header(KafkaHeaders.TIMESTAMP) timestamp: Long,
     ) {
-
-        queueAdapter.addToWaitingQueue(accessToken, timestamp)
+        val userInfo = authAdapter.getUserInfo(accessToken)
+        val platformId = userInfo.platform.platformId
+        val tps = userInfo.platform.tps
+        ServerTPSMap.put(platformId, tps)
+        queueAdapter.addToWaitingQueue(accessToken, timestamp, platformId)
     }
 
 }

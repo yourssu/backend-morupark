@@ -42,6 +42,9 @@ security:
     secret: thisIsASecretKeyForJWTGenerationChangeMe
     access-token-expiration: 86400000 # 24 hours in milliseconds
     refresh-token-expiration: 604800000 # 7 days in milliseconds
+    expiration : 864000000 # 24 hours in milliseconds
+  admin:
+    admin-key: ${ADMIN_KEY:defaultAdminKey}
 
 logging:
   level:

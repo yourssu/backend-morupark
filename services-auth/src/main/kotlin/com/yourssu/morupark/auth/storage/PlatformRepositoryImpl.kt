@@ -27,6 +27,12 @@ class PlatformRepositoryImpl(
             ?.toDomain()
             ?: throw NoSuchElementException("No platform with name: $name")
     }
+
+    override fun getById(platformId: Long): Platform {
+        return platformJpaRepository.findById(platformId)
+            .orElseThrow { NoSuchElementException("No platform with id: $platformId") }
+            .toDomain()
+    }
 }
 
 interface PlatformJpaRepository: JpaRepository<PlatformEntity, Long> {
