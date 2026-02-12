@@ -15,18 +15,16 @@ class QueueService(
 ) {
 
     fun enqueue(accessToken: String) {
-        if (!authAdapter.isTokenValid(accessToken)) {
-            throw IllegalStateException("Access token is invalid")
-        }
+        // Validate token by getting user info
+        authAdapter.getUserInfo(accessToken)
         kafkaProducer.send(accessToken)
     }
 
     fun getWaitingToken(accessToken: String): String {
-        if (!authAdapter.isTokenValid(accessToken)) {
-            throw IllegalStateException("Access token is invalid")
-        }
+        val userInfo = authAdapter.getUserInfo(accessToken)
+        val platformId = userInfo.platform.platformId
 
-        if (!queueAdapter.isInQueue(accessToken)) {
+        if (!queueAdapter.isInQueue(accessToken, platformId)) {
             throw IllegalStateException("Access token is not in queue")
         }
 
@@ -34,16 +32,19 @@ class QueueService(
     }
 
     fun getTicketStatusResult(accessToken: String, waitingToken: String): Any {
-        val ticketStatus = queueAdapter.getTicketStatus(accessToken)
+        val userInfo = authAdapter.getUserInfo(accessToken)
+        val platformId = userInfo.platform.platformId
+
+        val ticketStatus = queueAdapter.getTicketStatus(accessToken, platformId)
         if (ticketStatus == TicketStatus.ALLOWED) {
-            queueAdapter.deleteFromAllowedQueue(accessToken)
+            queueAdapter.deleteFromAllowedQueue(accessToken, platformId)
             return getAllowedStatusResult(waitingToken)
         }
-        return getWaitingStatusResult(accessToken)
+        return getWaitingStatusResult(accessToken, platformId)
     }
 
-    private fun getWaitingStatusResult(accessToken: String): ReadWaitingStatusResult {
-        val rank = queueAdapter.getRank(accessToken)!!
+    private fun getWaitingStatusResult(accessToken: String, platformId: Long): ReadWaitingStatusResult {
+        val rank = queueAdapter.getRank(accessToken, platformId)!!
         val estimatedWaitingTime = waitingTimeEstimator.estimateWaitingTime(rank)
         return ReadWaitingStatusResult(TicketStatus.WAITING, rank, estimatedWaitingTime)
     }

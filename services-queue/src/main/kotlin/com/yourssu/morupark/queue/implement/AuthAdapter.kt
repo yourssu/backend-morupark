@@ -1,5 +1,6 @@
 package com.yourssu.morupark.queue.implement
 
+import com.yourssu.morupark.queue.business.UserInfo
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 
@@ -10,22 +11,21 @@ class AuthAdapter(
     private val AUTH_SERVICE_URL = "http://localhost:8081"
     private val webClientAuth = webClient.baseUrl(AUTH_SERVICE_URL).build()
 
-    fun isTokenValid(accessToken: String): Boolean {
+    fun getUserInfo(accessToken: String): UserInfo {
         return webClientAuth.get()
             .uri { uriBuilder ->
-                uriBuilder.path("/auth/token")
+                uriBuilder.path("/auth/me")
                     .queryParam("accessToken", accessToken)
                     .build()
             }
             .retrieve()
-            .bodyToMono(Boolean::class.java)
-            .block() == true
+            .bodyToMono(UserInfo::class.java)
+            .block() ?: throw IllegalStateException("Failed to get user info")
     }
 
     fun getWaitingToken(accessToken: String): String {
         return webClientAuth.get()
             .uri { uriBuilder ->
-                // TODO: 레오에게 이거 엔드포인트 뭔지 물어보기
                 uriBuilder.path("/auth/waiting-token")
                     .queryParam("accessToken", accessToken)
                     .build()
@@ -38,8 +38,7 @@ class AuthAdapter(
     fun getExternalServerToken(waitingToken: String): String {
         return webClientAuth.get()
             .uri { uriBuilder ->
-                // TODO: 레오에게 이거 엔드포인트 뭔지 물어보기
-                uriBuilder.path("/auth/external-sever-token")
+                uriBuilder.path("/platforms/url")
                     .queryParam("waitingToken", waitingToken)
                     .build()
             }

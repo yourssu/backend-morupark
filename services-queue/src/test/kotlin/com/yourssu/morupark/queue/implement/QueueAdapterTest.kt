@@ -5,10 +5,15 @@ import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.Runs
 import io.mockk.verify
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.data.redis.core.Cursor
 import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.data.redis.core.ScanOptions
 import org.springframework.data.redis.core.SetOperations
 import org.springframework.data.redis.core.ZSetOperations
 import kotlin.test.assertEquals
@@ -33,8 +38,9 @@ class QueueAdapterTest {
     private lateinit var queueAdapter: QueueAdapter
 
     private val token = "token123"
-    private val QUEUE_WAITING_KEY = "queue:waiting"
-    private val QUEUE_ALLOWED_KEY = "queue:allowed"
+    private val platformId = 1L
+    private val QUEUE_WAITING_KEY = "queue:$platformId:waiting"
+    private val QUEUE_ALLOWED_KEY = "queue:$platformId:allowed"
 
     @Test
     fun `사용자가 대기열에 추가되면, waiting queue에 저장된다`() {
@@ -44,7 +50,7 @@ class QueueAdapterTest {
         val timestamp = System.nanoTime()
 
         // when
-        queueAdapter.addToWaitingQueue(token, timestamp)
+        queueAdapter.addToWaitingQueue(token, timestamp, platformId)
 
         // then
         verify {
@@ -60,7 +66,7 @@ class QueueAdapterTest {
         every { setOps.add(QUEUE_ALLOWED_KEY, *accessTokens.toTypedArray()) } returns 3L
 
         // when
-        queueAdapter.addToAllowedQueue(accessTokens)
+        queueAdapter.addToAllowedQueue(accessTokens, platformId)
 
         // then
         verify { setOps.add(QUEUE_ALLOWED_KEY, *accessTokens.toTypedArray()) }
@@ -73,15 +79,31 @@ class QueueAdapterTest {
         val count = 5L
         val expectedItems = setOf("token1", "token2", "token3")
         every { zSetOps.range(QUEUE_WAITING_KEY, 0, count - 1) } returns expectedItems
-        every { zSetOps.remove(QUEUE_WAITING_KEY, expectedItems) } returns 3L
+        every { zSetOps.remove(QUEUE_WAITING_KEY, *expectedItems.toTypedArray()) } returns 3L
 
         // when
-        val result = queueAdapter.popFromWaitingQueue(count)
+        val result = queueAdapter.popFromWaitingQueue(count, platformId)
 
         // then
         assertEquals(expectedItems, result)
         verify { zSetOps.range(QUEUE_WAITING_KEY, 0, count - 1) }
-        verify { zSetOps.remove(QUEUE_WAITING_KEY, expectedItems) }
+        verify { zSetOps.remove(QUEUE_WAITING_KEY, *expectedItems.toTypedArray()) }
+    }
+
+    @Test
+    fun `대기열이 비어있으면 빈 결과를 반환한다`() {
+        // given
+        every { redisTemplate.opsForZSet() } returns zSetOps
+        val count = 5L
+        every { zSetOps.range(QUEUE_WAITING_KEY, 0, count - 1) } returns emptySet()
+
+        // when
+        val result = queueAdapter.popFromWaitingQueue(count, platformId)
+
+        // then
+        assertTrue(result?.isEmpty() ?: true)
+        verify { zSetOps.range(QUEUE_WAITING_KEY, 0, count - 1) }
+        verify(exactly = 0) { zSetOps.remove(any(), *anyVararg()) }
     }
 
     @Test
@@ -91,7 +113,7 @@ class QueueAdapterTest {
         every { setOps.remove(QUEUE_ALLOWED_KEY, token) } returns 1L
 
         // when
-        queueAdapter.deleteFromAllowedQueue(token)
+        queueAdapter.deleteFromAllowedQueue(token, platformId)
 
         // then
         verify { setOps.remove(QUEUE_ALLOWED_KEY, token) }
@@ -105,7 +127,7 @@ class QueueAdapterTest {
         every { zSetOps.score(QUEUE_WAITING_KEY, token) } returns 1000.0
 
         // when
-        val result = queueAdapter.isInQueue(token)
+        val result = queueAdapter.isInQueue(token, platformId)
 
         // then
         assertTrue(result)
@@ -121,7 +143,7 @@ class QueueAdapterTest {
         every { setOps.isMember(QUEUE_ALLOWED_KEY, token) } returns true
 
         // when
-        val result = queueAdapter.isInQueue(token)
+        val result = queueAdapter.isInQueue(token, platformId)
 
         // then
         assertTrue(result)
@@ -138,7 +160,7 @@ class QueueAdapterTest {
         every { setOps.isMember(QUEUE_ALLOWED_KEY, token) } returns false
 
         // when
-        val result = queueAdapter.isInQueue(token)
+        val result = queueAdapter.isInQueue(token, platformId)
 
         // then
         assertFalse(result)
@@ -151,7 +173,7 @@ class QueueAdapterTest {
         every { zSetOps.rank(QUEUE_WAITING_KEY, token) } returns 5L
 
         // when
-        val result = queueAdapter.getTicketStatus(token)
+        val result = queueAdapter.getTicketStatus(token, platformId)
 
         // then
         assertEquals(TicketStatus.WAITING, result)
@@ -166,7 +188,7 @@ class QueueAdapterTest {
         every { setOps.isMember(QUEUE_ALLOWED_KEY, token) } returns true
 
         // when
-        val result = queueAdapter.getTicketStatus(token)
+        val result = queueAdapter.getTicketStatus(token, platformId)
 
         // then
         assertEquals(TicketStatus.ALLOWED, result)
@@ -181,7 +203,7 @@ class QueueAdapterTest {
         every { setOps.isMember(QUEUE_ALLOWED_KEY, token) } returns false
 
         // when
-        val exception = assertFailsWith<IllegalStateException> { queueAdapter.getTicketStatus(token) }
+        val exception = assertFailsWith<IllegalStateException> { queueAdapter.getTicketStatus(token, platformId) }
 
         // then
         assertEquals("현재 대기열에 존재하지 않습니다.", exception.message)
@@ -195,7 +217,7 @@ class QueueAdapterTest {
         every { zSetOps.rank(QUEUE_WAITING_KEY, token) } returns expectedRank
 
         // when
-        val result = queueAdapter.getRank(token)
+        val result = queueAdapter.getRank(token, platformId)
 
         // then
         assertEquals(expectedRank, result)
@@ -208,9 +230,41 @@ class QueueAdapterTest {
         every { zSetOps.rank(QUEUE_WAITING_KEY, token) } returns null
 
         // when
-        val result = queueAdapter.getRank(token)
+        val result = queueAdapter.getRank(token, platformId)
 
         // then
         assertNull(result)
+    }
+
+    @Test
+    fun `getAllPlatformWaitingKeys로 모든 플랫폼 대기열 키를 조회한다`() {
+        // given
+        val cursor = mockk<Cursor<String>>(relaxed = true)
+        val expectedKeys = listOf("queue:1:waiting", "queue:2:waiting", "queue:3:waiting")
+        val iterator = expectedKeys.iterator()
+
+        every { redisTemplate.scan(any<ScanOptions>()) } returns cursor
+        every { cursor.hasNext() } answers { iterator.hasNext() }
+        every { cursor.next() } answers { iterator.next() }
+        every { cursor.close() } just Runs
+
+        // when
+        val result = queueAdapter.getAllPlatformWaitingKeys()
+
+        // then
+        assertEquals(expectedKeys.toSet(), result)
+        verify { cursor.close() }
+    }
+
+    @Test
+    fun `extractPlatformIdFromKey로 키에서 플랫폼 ID를 추출한다`() {
+        // given
+        val key = "queue:123:waiting"
+
+        // when
+        val result = queueAdapter.extractPlatformIdFromKey(key)
+
+        // then
+        assertEquals(123L, result)
     }
 }

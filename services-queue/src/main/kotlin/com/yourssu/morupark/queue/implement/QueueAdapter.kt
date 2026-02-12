@@ -2,6 +2,7 @@ package com.yourssu.morupark.queue.implement
 
 import com.yourssu.morupark.queue.business.TicketStatus
 import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.data.redis.core.ScanOptions
 import org.springframework.stereotype.Component
 
 @Component
@@ -9,44 +10,61 @@ class QueueAdapter(
     private val redisTemplate: RedisTemplate<String, String>
 ) {
 
-    private val QUEUE_WAITING_KEY = "queue:waiting"
-    private val QUEUE_ALLOWED_KEY = "queue:allowed"
+    private fun getWaitingKey(platformId: Long) = "queue:$platformId:waiting"
+    private fun getAllowedKey(platformId: Long) = "queue:$platformId:allowed"
 
-    fun addToWaitingQueue(accessToken: String, timestamp: Long) {
-        redisTemplate.opsForZSet().add(QUEUE_WAITING_KEY, accessToken, timestamp.toDouble())
+    fun addToWaitingQueue(accessToken: String, timestamp: Long, platformId: Long) {
+        redisTemplate.opsForZSet().add(getWaitingKey(platformId), accessToken, timestamp.toDouble())
     }
 
-    fun addToAllowedQueue(accessTokens: Set<String>) {
-        redisTemplate.opsForSet().add(QUEUE_ALLOWED_KEY, *accessTokens.toTypedArray())
+    fun addToAllowedQueue(accessTokens: Set<String>, platformId: Long) {
+        redisTemplate.opsForSet().add(getAllowedKey(platformId), *accessTokens.toTypedArray())
     }
 
-    fun popFromWaitingQueue(count: Long): Set<String>? {
-        val items = redisTemplate.opsForZSet().range(QUEUE_WAITING_KEY, 0, count - 1)
-        redisTemplate.opsForZSet().remove(QUEUE_WAITING_KEY, items)
+    fun popFromWaitingQueue(count: Long, platformId: Long): Set<String>? {
+        val waitingKey = getWaitingKey(platformId)
+        val items = redisTemplate.opsForZSet().range(waitingKey, 0, count - 1)
+        if (!items.isNullOrEmpty()) {
+            redisTemplate.opsForZSet().remove(waitingKey, *items.toTypedArray())
+        }
         return items
     }
 
-    fun deleteFromAllowedQueue(accessToken: String) {
-        redisTemplate.opsForSet().remove(QUEUE_ALLOWED_KEY, accessToken)
+    fun deleteFromAllowedQueue(accessToken: String, platformId: Long) {
+        redisTemplate.opsForSet().remove(getAllowedKey(platformId), accessToken)
     }
 
-    fun isInQueue(accessToken: String): Boolean {
-        val score = redisTemplate.opsForZSet().score(QUEUE_WAITING_KEY, accessToken)
+    fun isInQueue(accessToken: String, platformId: Long): Boolean {
+        val score = redisTemplate.opsForZSet().score(getWaitingKey(platformId), accessToken)
         if (score != null) {
             return true
         }
-        return redisTemplate.opsForSet().isMember(QUEUE_ALLOWED_KEY, accessToken)!!
+        return redisTemplate.opsForSet().isMember(getAllowedKey(platformId), accessToken)!!
     }
 
-    fun getTicketStatus(accessToken: String): TicketStatus {
-        val rank = redisTemplate.opsForZSet().rank(QUEUE_WAITING_KEY, accessToken)
+    fun getTicketStatus(accessToken: String, platformId: Long): TicketStatus {
+        val rank = redisTemplate.opsForZSet().rank(getWaitingKey(platformId), accessToken)
         if (rank != null) return TicketStatus.WAITING
-        val allowed = redisTemplate.opsForSet().isMember(QUEUE_ALLOWED_KEY, accessToken)
+        val allowed = redisTemplate.opsForSet().isMember(getAllowedKey(platformId), accessToken)
         if (allowed != null && allowed) return TicketStatus.ALLOWED
         throw IllegalStateException("현재 대기열에 존재하지 않습니다.")
     }
 
-    fun getRank(accessToken: String): Long? {
-        return redisTemplate.opsForZSet().rank(QUEUE_WAITING_KEY, accessToken)
+    fun getRank(accessToken: String, platformId: Long): Long? {
+        return redisTemplate.opsForZSet().rank(getWaitingKey(platformId), accessToken)
+    }
+
+    fun getAllPlatformWaitingKeys(): Set<String> {
+        val keys = mutableSetOf<String>()
+        val scanOptions = ScanOptions.scanOptions().match("queue:*:waiting").count(100).build()
+        redisTemplate.scan(scanOptions).use { cursor ->
+            cursor.forEach { key -> keys.add(key) }
+        }
+        return keys
+    }
+
+    fun extractPlatformIdFromKey(key: String): Long {
+        val parts = key.split(":")
+        return parts[1].toLong()
     }
 }
