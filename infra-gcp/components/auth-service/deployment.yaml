@@ -66,22 +66,24 @@ spec:
                 secretKeyRef:
                   name: morupark-gcp-secrets
                   key: JWT_SECRET
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Xms512m -Xmx1024m -XX:MaxMetaspaceSize=256m -XX:+ExitOnOutOfMemoryError"
           livenessProbe:
             httpGet:
               path: /actuator/health
               port: http
-            initialDelaySeconds: 30
-            periodSeconds: 10
+            initialDelaySeconds: 120
+            periodSeconds: 30
             timeoutSeconds: 5
             failureThreshold: 3
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
               port: http
-            initialDelaySeconds: 5
-            periodSeconds: 5
+            initialDelaySeconds: 60
+            periodSeconds: 10
             timeoutSeconds: 3
-            failureThreshold: 3
+            failureThreshold: 6
           resources:
             requests:
               memory: "256Mi"

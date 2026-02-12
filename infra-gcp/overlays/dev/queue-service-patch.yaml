@@ -9,10 +9,15 @@ spec:
     spec:
       containers:
       - name: queue-service
+        env:
+          - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+            value: none
+          - name: SPRING_DATASOURCE_URL
+            value: ""
         resources:
           requests:
-            memory: "128Mi"
+            memory: "1Gi"
             cpu: "50m"
           limits:
-            memory: "256Mi"
+            memory: "2Gi"
             cpu: "200m"
