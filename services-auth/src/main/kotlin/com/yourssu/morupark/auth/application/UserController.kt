@@ -1,5 +1,6 @@
 package com.yourssu.morupark.auth.application
 
+import com.yourssu.morupark.auth.application.dto.TokenRefreshRequest
 import com.yourssu.morupark.auth.annotation.UserId
 import com.yourssu.morupark.auth.business.dto.UserInfoResponse
 import com.yourssu.morupark.auth.application.dto.UserRegisterRequest
@@ -25,6 +26,10 @@ class UserController(
             .body(userService.register(request.toCommand()))
     }
 
+    @PostMapping("/refresh")
+    fun refresh(@RequestBody request: TokenRefreshRequest): ResponseEntity<UserRegisterResponse> {
+        return ResponseEntity.ok(userService.refresh(request.toCommand()))
+    }
     @GetMapping("/me")
     fun verify(@UserId userId: Long,) : ResponseEntity<UserInfoResponse> {
         return ResponseEntity.ok(userService.verify(userId))
