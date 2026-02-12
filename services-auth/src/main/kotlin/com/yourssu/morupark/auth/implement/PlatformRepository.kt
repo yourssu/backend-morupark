@@ -6,5 +6,4 @@ interface PlatformRepository {
     fun save(platform: Platform): Platform
     fun getByName(name: String): Platform
     fun getById(id: Long): Platform
-    fun getById(platformId: Long): Platform
 }

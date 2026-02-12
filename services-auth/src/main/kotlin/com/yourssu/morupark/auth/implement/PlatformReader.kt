@@ -13,7 +13,5 @@ class PlatformReader(
 
     fun getById(id: Long): Platform {
         return platformRepository.getById(id)
-    fun getById(platformId: Long): Platform {
-        return platformRepository.getById(platformId)
     }
 }
