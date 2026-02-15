@@ -7,6 +7,16 @@ resource "google_sql_database_instance" "mysql_instance" {
     tier = "db-f1-micro" # 최소 사양
     ip_configuration {
       ipv4_enabled = true
+      authorized_networks {
+        name  = "user-public-ip"
+        value = "175.198.119.106/32"
+      }
+      authorized_networks {
+        name  = "allow-all-for-gke-proxy"
+        value = "0.0.0.0/0"
+        # NOTE: This allows all IPs. It's safe when using the Cloud SQL Auth Proxy
+        # but should be restricted to specific GKE node IPs or a NAT Gateway IP in production.
+      }
     }
     location_preference {
       zone = "asia-northeast3-a"

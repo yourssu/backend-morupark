@@ -2,7 +2,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: auth-service-hpa
-  namespace: morupark
+  namespace: morupark-dev
   labels:
     app.kubernetes.io/name: auth-service-hpa
     app.kubernetes.io/component: auth

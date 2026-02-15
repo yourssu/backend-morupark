@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: queue-service
-  namespace: morupark
+  namespace: morupark-dev
   labels:
     app.kubernetes.io/name: queue-service
     app.kubernetes.io/component: queue

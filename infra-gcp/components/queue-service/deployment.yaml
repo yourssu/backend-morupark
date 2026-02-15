@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: queue-service
-  namespace: morupark
+  namespace: morupark-dev
   labels:
     app.kubernetes.io/name: queue-service
     app.kubernetes.io/component: queue
@@ -40,7 +40,7 @@ spec:
             - name: SPRING_PROFILES_ACTIVE
               value: "prod"
             - name: DB_URL
-              value: "jdbc:mysql://127.0.0.1:3306/moruparkdb?useSSL=false"
+              value: "jdbc:mysql://127.0.0.1:3306/moruparkdb?useSSL=false&serverTimezone=Asia/Seoul"
             - name: KAFKA_BOOTSTRAP_SERVERS
               valueFrom:
                 configMapKeyRef:

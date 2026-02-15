@@ -2,7 +2,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: queue-service-hpa
-  namespace: morupark
+  namespace: morupark-dev
   labels:
     app.kubernetes.io/name: queue-service-hpa
     app.kubernetes.io/component: queue

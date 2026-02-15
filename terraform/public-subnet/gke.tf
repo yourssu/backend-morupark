@@ -15,5 +15,14 @@ resource "google_container_cluster" "morupark_gke" {
   release_channel {
     channel = "REGULAR"
   }
+  master_authorized_networks_config {
+    dynamic "cidr_blocks" {
+      for_each = toset(var.authorized_ip_cidrs)
+      content {
+        cidr_block   = cidr_blocks.value
+        display_name = "Managed by Terraform"
+      }
+    }
+  }
   deletion_protection = false
 }

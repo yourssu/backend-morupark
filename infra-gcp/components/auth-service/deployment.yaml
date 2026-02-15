@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: auth-service
-  namespace: morupark
+  namespace: morupark-dev
   labels:
     app.kubernetes.io/name: auth-service
     app.kubernetes.io/component: auth
@@ -40,7 +40,7 @@ spec:
             - name: SPRING_PROFILES_ACTIVE
               value: "prod"
             - name: DB_URL
-              value: "jdbc:mysql://127.0.0.1:3306/moruparkdb?useSSL=false"
+              value: "jdbc:mysql://127.0.0.1:3306/moruparkdb?useSSL=false&serverTimezone=Asia/Seoul"
             - name: KAFKA_BOOTSTRAP_SERVERS
               valueFrom:
                 configMapKeyRef:
@@ -97,15 +97,20 @@ spec:
             capabilities:
               drop:
                 - ALL
-#        - name: cloud-sql-proxy
-#          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0
-#          args:
-#            - "--private-ip"
-#            - "--structured-logs"
-#            - "yourssu-morupark:asia-northeast3:morupark-db-private"
-#          securityContext:
-#            runAsNonRoot: true
-#          resources:
-#            requests:
-#              memory: "128Mi"
-#              cpu: "50m"
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0
+          args:
+            - "--structured-logs"
+            - "$(SQL_INSTANCE_CONNECTION_NAME)"
+          env:
+            - name: SQL_INSTANCE_CONNECTION_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: morupark-sql-config
+                  key: SQL_INSTANCE_CONNECTION_NAME
+          securityContext:
+            runAsNonRoot: true
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "50m"

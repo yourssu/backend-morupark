@@ -4,8 +4,6 @@ server:
 spring:
   application:
     name: queue-service
-  profiles:
-    active: dev
   
   datasource:
     url: ${DB_URL:jdbc:h2:mem:queuedb}

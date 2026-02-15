@@ -38,3 +38,9 @@ variable "domain" {
   type        = string
   default     = "api.morupark.yourssu.com"
 }
+
+variable "authorized_ip_cidrs" {
+  description = "GKE 마스터에 접근을 허용할 IP CIDR 목록"
+  type        = list(string)
+  default     = ["175.198.119.106/32"]
+}
