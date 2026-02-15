@@ -26,6 +26,21 @@ spec:
         runAsUser: 1001
         runAsGroup: 1001
         fsGroup: 1001
+
+      # Cloud SQL proxy가 띄워질 때까지 대기
+      initContainers:
+        - name: wait-for-db
+          image: busybox:1.35
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Cloud SQL Proxy..."
+              until nc -z 127.0.0.1 3306; do
+                sleep 2
+              done
+              echo "Cloud SQL Proxy is ready" 
+
       containers:
         - name: queue-service
           image: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/queue-service:latest
@@ -40,7 +55,7 @@ spec:
             - name: SPRING_PROFILES_ACTIVE
               value: "prod"
             - name: DB_URL
-              value: "jdbc:mysql://127.0.0.1:3306/moruparkdb?useSSL=false&serverTimezone=Asia/Seoul"
+              value: "jdbc:mysql://127.0.0.1:3306/morupark?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Seoul"
             - name: KAFKA_BOOTSTRAP_SERVERS
               valueFrom:
                 configMapKeyRef:
@@ -117,15 +132,16 @@ spec:
             capabilities:
               drop:
                 - ALL
-#        - name: cloud-sql-proxy
-#          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0
-#          args:
-#            - "--private-ip"
-#            - "--structured-logs"
-#            - "yourssu-morupark:asia-northeast3:morupark-db-private"
-#          securityContext:
-#            runAsNonRoot: true
-#          resources:
-#            requests:
-#              memory: "128Mi"
-#              cpu: "50m"
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0
+          args:
+            - "--private-ip"
+            - "--structured-logs"
+            - "--port=3306"
+            - "yourssu-morupark:asia-northeast3:morupark-db-private"
+          securityContext:
+            runAsNonRoot: true
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "50m"
