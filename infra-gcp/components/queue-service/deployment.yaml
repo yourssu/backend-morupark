@@ -121,10 +121,10 @@ spec:
         - name: cloud-sql-proxy
           image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0
           args:
-            - "--private-ip"
+#            - "--private-ip" # cloud sql을 public으로 수정
             - "--structured-logs"
             - "--port=3306"
-            - "yourssu-morupark:asia-northeast3:morupark-db-private"
+            - "yourssu-morupark:asia-northeast3:morupark-db-public"
           securityContext:
             runAsNonRoot: true
           resources:
