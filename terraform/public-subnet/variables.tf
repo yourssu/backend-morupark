@@ -44,3 +44,9 @@ variable "authorized_ip_cidrs" {
   type        = list(string)
   default     = ["175.198.119.106/32"]
 }
+
+variable "namespace" {
+  type    = string
+  default = "morupark-dev"
+}
+

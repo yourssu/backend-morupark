@@ -27,20 +27,6 @@ spec:
         runAsGroup: 1001
         fsGroup: 1001
 
-      # Cloud SQL proxy가 띄워질 때까지 대기
-      initContainers:
-        - name: wait-for-db
-          image: busybox:1.35
-          command:
-            - sh
-            - -c
-            - |
-              echo "Waiting for Cloud SQL Proxy..."
-              until nc -z 127.0.0.1 3306; do
-                sleep 2
-              done
-              echo "Cloud SQL Proxy is ready" 
-
       containers:
         - name: queue-service
           image: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/queue-service:latest

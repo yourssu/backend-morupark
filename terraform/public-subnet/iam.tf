@@ -1,22 +1,44 @@
-# main.tf에 선언된 google_project 데이터 소스를 사용합니다.
+############################################
+# Common locals
+############################################
+locals {
+  project_id = data.google_project.project.project_id
 
-# 1. auth-service 전용 Google 서비스 계정(GSA) 생성
-resource "google_service_account" "auth_service_gsa" {
-  account_id   = "auth-service-sa" # GSA의 ID
-  display_name = "Auth Service GSA"
+  services = {
+    auth  = "auth-service-sa"
+    queue = "queue-service-sa"
+  }
 }
 
-# 2. Kubernetes 서비스 계정(KSA)이 GSA를 사용할 수 있도록 허용 (Workload Identity 설정)
-# "roles/iam.workloadIdentityUser" 역할 부여
-resource "google_service_account_iam_member" "workload_identity_user" {
-  service_account_id = google_service_account.auth_service_gsa.name
+############################################
+# Google Service Accounts (GSA)
+############################################
+resource "google_service_account" "gsa" {
+  for_each = local.services
+
+  account_id   = each.value
+  display_name = "${each.key} service GSA"
+}
+
+############################################
+# Allow KSA -> GSA impersonation (Workload Identity)
+############################################
+resource "google_service_account_iam_member" "workload_identity" {
+  for_each = local.services
+
+  service_account_id = google_service_account.gsa[each.key].name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "serviceAccount:${data.google_project.project.project_id}.svc.id.goog[morupark-dev/auth-service-sa]"
+
+  member = "serviceAccount:${local.project_id}.svc.id.goog[${var.namespace}/${each.value}]"
 }
 
-# 3. 생성된 GSA에 Cloud SQL 접속 권한 부여
-resource "google_project_iam_member" "sql_client_binding" {
-  project = data.google_project.project.project_id
+############################################
+# Cloud SQL 권한
+############################################
+resource "google_project_iam_member" "cloudsql_client" {
+  for_each = local.services
+
+  project = local.project_id
   role    = "roles/cloudsql.client"
-  member  = google_service_account.auth_service_gsa.member
+  member  = google_service_account.gsa[each.key].member
 }
