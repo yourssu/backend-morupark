@@ -32,8 +32,8 @@ class JwtAuthenticationFilterTest {
         secret = "a".repeat(64),
         accessTokenExpiration = 3_600_000,
     )
-    private val jwtUtil = JwtUtil(jwtProperties.secret, jwtProperties.accessTokenExpiration)
-    private val filter = JwtAuthenticationFilter(jwtProperties)
+    private val jwtUtil = JwtUtil(jwtProperties)
+    private val filter = JwtAuthenticationFilter(jwtUtil)
 
     @BeforeEach
     fun setup() {

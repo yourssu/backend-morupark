@@ -7,10 +7,12 @@ import com.yourssu.morupark.auth.config.properties.JwtProperties
 import com.yourssu.morupark.auth.implement.PlatformReader
 import com.yourssu.morupark.auth.implement.RefreshTokenReader
 import com.yourssu.morupark.auth.implement.RefreshTokenWriter
+import com.yourssu.morupark.auth.implement.UserReader
 import com.yourssu.morupark.auth.implement.UserWriter
 import com.yourssu.morupark.auth.implement.domain.Platform
 import com.yourssu.morupark.auth.implement.domain.RefreshToken
 import com.yourssu.morupark.auth.implement.domain.User
+import com.yourssu.morupark.auth.util.JwtUtil
 import io.mockk.CapturingSlot
 import io.mockk.MockKAnnotations
 import io.mockk.every
@@ -26,6 +28,9 @@ import java.time.Duration
 import java.time.Instant
 
 class UserServiceTest {
+
+    @MockK
+    private lateinit var userReader: UserReader
 
     @MockK(relaxUnitFun = true)
     private lateinit var userWriter: UserWriter
@@ -44,6 +49,8 @@ class UserServiceTest {
         accessTokenExpiration = 3_600_000,
         refreshTokenExpiration = 604_800_000,
     )
+
+    private val jwtUtil = JwtUtil(jwtProperties)
 
     @InjectMockKs
     private lateinit var userService: UserService

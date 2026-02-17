@@ -12,9 +12,8 @@ import org.springframework.web.method.support.ModelAndViewContainer
 
 @Component
 class ArgumentResolver(
-    jwtProperties: JwtProperties
+    private val jwtUtil: JwtUtil
 ) : HandlerMethodArgumentResolver {
-    private val jwtUtil = JwtUtil(jwtProperties.secret, jwtProperties.accessTokenExpiration)
 
     override fun supportsParameter(parameter: MethodParameter): Boolean {
         return parameter.parameterType == Long::class.java &&

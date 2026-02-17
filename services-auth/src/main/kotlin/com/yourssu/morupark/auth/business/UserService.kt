@@ -24,16 +24,17 @@ class UserService(
     private val refreshTokenReader: RefreshTokenReader,
     private val jwtProperties: JwtProperties,
     private val userReader: UserReader,
+    private val jwtUtil: JwtUtil,
 ) {
     fun register(command: UserRegisterCommand): UserRegisterResponse {
         val platform = platformReader.getByName(command.platformName)
         val user = userWriter.save(User(platformId = platform.id!!))
-        val jwtUtil = JwtUtil(platform.secretKey, jwtProperties.accessTokenExpiration)
-        val token = jwtUtil.generateToken(user.id!!)
-        val refreshToken = createRefreshToken(user.id!!, platform.id!!)
+        val accessToken = jwtUtil.generateToken(user.id!!)
+        val refreshToken = createRefreshToken(user.id, platform.id)
         refreshTokenWriter.save(refreshToken)
+
         return UserRegisterResponse.of(
-            accessToken = token,
+            accessToken = accessToken,
             expiredIn = jwtProperties.accessTokenExpiration,
             refreshToken = refreshToken.token,
             refreshExpiredIn = jwtProperties.refreshTokenExpiration,
@@ -50,7 +51,6 @@ class UserService(
         }
 
         val platform = platformReader.getById(existing.platformId)
-        val jwtUtil = JwtUtil(platform.secretKey, jwtProperties.accessTokenExpiration)
         val newAccessToken = jwtUtil.generateToken(existing.userId)
 
         refreshTokenWriter.deleteByToken(existing.token)
