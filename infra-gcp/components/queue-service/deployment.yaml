@@ -29,7 +29,7 @@ spec:
 
       containers:
         - name: queue-service
-          image: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/queue-service:latest
+          image: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/queue-service:dev-2
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -41,7 +41,7 @@ spec:
             - name: SPRING_PROFILES_ACTIVE
               value: "prod"
             - name: DB_URL
-              value: "jdbc:mysql://127.0.0.1:3306/morupark?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Seoul"
+              value: "jdbc:mysql://127.0.0.1:3306/moruparkdb?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Seoul"
             - name: KAFKA_BOOTSTRAP_SERVERS
               valueFrom:
                 configMapKeyRef:

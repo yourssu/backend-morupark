@@ -6,3 +6,5 @@ resources:
   - configmap.yaml
   - secret-provider-class.yaml
   - morupark-sql-config.yaml
+  - secret-store.yaml
+  - external-secret.yaml

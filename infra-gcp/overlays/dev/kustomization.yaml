@@ -46,15 +46,3 @@ images:
     newTag: dev-latest
   - name: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/queue-service
     newTag: dev-latest
-
-
-
-# For dev, we don't use the SecretProviderClass but generate a simple secret.
-secretGenerator:
-  - name: morupark-gcp-secrets # Match the name used in the new component deployments
-    type: Opaque
-    literals:
-      - JWT_SECRET=dev-jwt-secret
-      - DB_USERNAME=dev-user
-      - DB_PASSWORD=dev-password
-      - REDIS_PASSWORD=""
