@@ -25,7 +25,7 @@ class SecurityConfig {
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { requests ->
                 requests
-                    .requestMatchers("/external-servers/**", "/auth/token/**").permitAll()
+                    .requestMatchers("/external-servers/**", "/auth/token/**", "/api/auth/login").permitAll()
                     .anyRequest().authenticated()
             }
             .exceptionHandling { exceptions ->

@@ -15,6 +15,7 @@ import com.yourssu.morupark.auth.implement.domain.User
 import com.yourssu.morupark.auth.util.JwtUtil
 import org.springframework.stereotype.Service
 import java.time.Instant
+import kotlin.random.Random
 
 @Service
 class UserService(
@@ -26,6 +27,11 @@ class UserService(
     private val userReader: UserReader,
     private val jwtUtil: JwtUtil,
 ) {
+    fun login(): String {
+        val userId = Random.nextLong(1, Long.MAX_VALUE)
+        return jwtUtil.generateToken(userId)
+    }
+
     fun register(command: UserRegisterCommand): UserRegisterResponse {
         val platform = platformReader.getByName(command.platformName)
         val user = userWriter.save(User(platformId = platform.id!!))

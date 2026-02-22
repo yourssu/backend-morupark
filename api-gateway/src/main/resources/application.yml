@@ -1,0 +1,50 @@
+server:
+  port: 8000
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/auth/**
+        - id: queue-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/queues/**
+          filters:
+            - JwtAuthenticationFilter
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:thisIsASecretKeyForJWTGenerationChangeMe}
+
+logging:
+  level:
+    com.yourssu.morupark: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: ${AUTH_SERVICE_URL}
+          predicates:
+            - Path=/api/auth/**
+        - id: queue-service
+          uri: ${QUEUE_SERVICE_URL}
+          predicates:
+            - Path=/api/queues/**
+          filters:
+            - JwtAuthenticationFilter
+
+logging:
+  level:
+    com.yourssu.morupark: INFO

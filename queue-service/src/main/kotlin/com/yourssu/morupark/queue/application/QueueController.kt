@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-@RequestMapping(path = ["/queues"])
+@RequestMapping("/api/queues")
 @RestController
 class QueueController(
     private val queueService: QueueService
@@ -33,5 +33,10 @@ class QueueController(
     ): ResponseEntity<Any> {
         val result = queueService.getTicketStatusResult(accessToken, waitingToken)
         return ResponseEntity.ok().body(result)
+    }
+
+    @GetMapping("/test")
+    fun test(@RequestHeader("X-User-Id") userId: String): ResponseEntity<Map<String, String?>> {
+        return ResponseEntity.ok(mapOf("message" to "gateway 연결 성공", "userId" to userId))
     }
 }

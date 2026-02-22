@@ -2,8 +2,9 @@ package com.yourssu.morupark.auth.application
 
 import com.yourssu.morupark.auth.application.dto.TokenRefreshRequest
 import com.yourssu.morupark.auth.annotation.UserId
-import com.yourssu.morupark.auth.business.dto.UserInfoResponse
+import com.yourssu.morupark.auth.application.dto.LoginRequest
 import com.yourssu.morupark.auth.application.dto.UserRegisterRequest
+import com.yourssu.morupark.auth.business.dto.UserInfoResponse
 import com.yourssu.morupark.auth.application.dto.UserRegisterResponse
 import com.yourssu.morupark.auth.business.UserService
 import org.springframework.http.HttpStatus
@@ -15,10 +16,15 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 class UserController(
     private val userService: UserService,
 ) {
+
+    @PostMapping("/login")
+    fun login(@RequestBody request: LoginRequest): ResponseEntity<Map<String, String>> {
+        return ResponseEntity.ok(mapOf("accessToken" to userService.login()))
+    }
 
     @PostMapping("/token")
     fun register(@RequestBody request : UserRegisterRequest) : ResponseEntity<UserRegisterResponse> {
@@ -30,9 +36,9 @@ class UserController(
     fun refresh(@RequestBody request: TokenRefreshRequest): ResponseEntity<UserRegisterResponse> {
         return ResponseEntity.ok(userService.refresh(request.toCommand()))
     }
+
     @GetMapping("/me")
     fun verify(@UserId userId: Long,) : ResponseEntity<UserInfoResponse> {
         return ResponseEntity.ok(userService.verify(userId))
     }
-    
 }
