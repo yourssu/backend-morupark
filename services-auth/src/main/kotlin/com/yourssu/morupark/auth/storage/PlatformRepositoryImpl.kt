@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository
 class PlatformRepositoryImpl(
     private val platformJpaRepository: PlatformJpaRepository,
 ): PlatformRepository {
+
     override fun save(platform: Platform): Platform {
         return platformJpaRepository.save(PlatformEntity.from(platform))
             .toDomain()

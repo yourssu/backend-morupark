@@ -1,6 +1,5 @@
 package com.yourssu.morupark.auth.config.filter
 
-import com.yourssu.morupark.auth.config.properties.JwtProperties
 import com.yourssu.morupark.auth.util.JwtUtil
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
@@ -11,9 +10,8 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.web.filter.OncePerRequestFilter
 
 class JwtAuthenticationFilter(
-    jwtProperties: JwtProperties,
+    private val jwtUtil: JwtUtil,
 ) : OncePerRequestFilter() {
-    private val jwtUtil = JwtUtil(jwtProperties.secret, jwtProperties.accessTokenExpiration)
 
     override fun doFilterInternal(
         request: HttpServletRequest,

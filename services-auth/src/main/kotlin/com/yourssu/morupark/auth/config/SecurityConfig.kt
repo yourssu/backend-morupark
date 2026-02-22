@@ -1,7 +1,7 @@
 package com.yourssu.morupark.auth.config
 
 import com.yourssu.morupark.auth.config.filter.JwtAuthenticationFilter
-import com.yourssu.morupark.auth.config.properties.JwtProperties
+import com.yourssu.morupark.auth.util.JwtUtil
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -18,7 +18,7 @@ class SecurityConfig {
     @Bean
     fun filterChain(
         http: HttpSecurity,
-        jwtProperties: JwtProperties,
+        jwtUtil: JwtUtil,
     ): SecurityFilterChain {
         http
             .csrf { it.disable() }
@@ -38,7 +38,7 @@ class SecurityConfig {
                     }
             }
             .addFilterBefore(
-                JwtAuthenticationFilter(jwtProperties),
+                JwtAuthenticationFilter(jwtUtil),
                 UsernamePasswordAuthenticationFilter::class.java,
             )
 
