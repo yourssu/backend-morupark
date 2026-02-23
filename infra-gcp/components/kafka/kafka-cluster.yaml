@@ -1,0 +1,109 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka
+  namespace: morupark-dev
+spec:
+  serviceName: kafka
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      securityContext:
+        fsGroup: 1001
+      initContainers:
+        - name: init-kafka-log-dir
+          image: busybox
+          command:
+            - sh
+            - -c
+            - |
+                mkdir -p /var/lib/kafka/data/kafka-logs
+                chown -R 1001:1001 /var/lib/kafka/data
+          volumeMounts:
+            - name: kafka-data
+              mountPath: /var/lib/kafka/data
+
+      containers:
+        - name: kafka
+          image: bitnamilegacy/kafka:3.3.2-debian-11-r11
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9092
+          env:
+            - name: KAFKA_ENABLE_KRAFT
+              value: "no"
+            - name: KAFKA_CFG_BROKER_ID
+              value: "0" # Set broker ID explicitly for Bitnami Kafka
+            - name: KAFKA_CFG_ZOOKEEPER_CONNECT
+              value: zookeeper.morupark-dev.svc.cluster.local:2181
+            - name: ALLOW_PLAINTEXT_LISTENER
+              value: "yes"
+            - name: KAFKA_CFG_LISTENERS
+              value: "PLAINTEXT://:9092"
+            - name: KAFKA_CFG_ADVERTISED_LISTENERS
+              value: "PLAINTEXT://kafka-0.kafka.morupark-dev.svc.cluster.local:9092"
+            - name: KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR
+              value: "1"
+            - name: KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+              value: "1"
+            - name: KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR
+              value: "1"
+            - name: KAFKA_CFG_GROUP_INITIAL_REBALANCING_DELAY_MS
+              value: "0"
+            - name: KAFKA_CFG_LOG_DIRS
+              value: "/var/lib/kafka/data/kafka-logs"
+            - name: KAFKA_HEAP_OPTS
+              value: "-Xms256m -Xmx256m"
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+              ephemeral-storage: "1Gi"
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+              ephemeral-storage: "1Gi"
+
+          volumeMounts:
+            - name: kafka-data
+              mountPath: /var/lib/kafka/data
+
+          readinessProbe:
+            tcpSocket:
+              port: 9092
+            initialDelaySeconds: 90
+            periodSeconds: 10
+
+          livenessProbe:
+            tcpSocket:
+              port: 9092
+            initialDelaySeconds: 120
+            periodSeconds: 30
+
+  volumeClaimTemplates:
+    - metadata:
+        name: kafka-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  namespace: morupark-dev
+spec:
+  ports:
+    - port: 9092
+      targetPort: 9092
+  selector:
+    app: kafka

@@ -1,0 +1,48 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: morupark-dev
+
+namespace: morupark-dev
+
+resources:
+  - ../../base
+  - ../../components/auth-service
+  - ../../components/queue-service
+  - ../../components/redis
+  - ../../components/kafka
+  - ingress.yaml
+
+patches:
+  - path: configmap-patch.yaml
+    target:
+      kind: ConfigMap
+      name: morupark-config
+  - path: remove-secret-provider-class-patch.yaml
+    target:
+      kind: SecretProviderClass
+      name: morupark-gcp-secrets-provider
+  - path: auth-service-patch.yaml
+    target:
+      kind: Deployment
+      name: auth-service
+  - path: queue-service-patch.yaml
+    target:
+      kind: Deployment
+      name: queue-service
+  - path: redis-patch.yaml
+    target:
+      kind: Deployment
+      name: redis
+
+labels:
+  - pairs:
+      environment: development
+      app.kubernetes.io/instance: morupark-dev
+
+images:
+  - name: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/auth-service
+    newTag: dev-latest
+  - name: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/queue-service
+    newTag: dev-latest

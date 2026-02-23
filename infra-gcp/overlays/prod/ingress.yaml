@@ -1,0 +1,39 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: morupark-prod-ingress
+  namespace: morupark-prod
+  labels:
+    app.kubernetes.io/name: morupark-prod-ingress
+    app.kubernetes.io/part-of: morupark-msa
+    environment: production
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: "morupark-static-ip"
+    networking.gke.io/managed-certificates: "morupark-managed-cert"
+spec:
+  rules:
+  - host: <YOUR_DOMAIN>
+    http:
+      paths:
+      - path: /auth
+        pathType: Prefix
+        backend:
+          service:
+            name: auth-service
+            port:
+              number: 8081
+      - path: /queue
+        pathType: Prefix
+        backend:
+          service:
+            name: queue-service
+            port:
+              number: 8082
+      - path: /health
+        pathType: Prefix
+        backend:
+          service:
+            name: auth-service
+            port:
+              number: 8081

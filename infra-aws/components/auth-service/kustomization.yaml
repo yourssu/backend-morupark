@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: auth-service
+
+resources:
+  - deployment.yaml
+  - service.yaml
+  - hpa.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: auth-service
+      app.kubernetes.io/component: auth
+      app.kubernetes.io/part-of: morupark-msa

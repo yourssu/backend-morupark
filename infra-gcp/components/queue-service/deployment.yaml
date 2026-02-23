@@ -1,0 +1,133 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: queue-service
+  namespace: morupark-dev
+  labels:
+    app.kubernetes.io/name: queue-service
+    app.kubernetes.io/component: queue
+    app.kubernetes.io/part-of: morupark-msa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: queue-service
+      app.kubernetes.io/component: queue
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: queue-service
+        app.kubernetes.io/component: queue
+        app.kubernetes.io/part-of: morupark-msa
+    spec:
+      serviceAccountName: queue-service-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+
+      containers:
+        - name: queue-service
+          image: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/queue-service:dev-2
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8082
+              protocol: TCP
+          env:
+            - name: SERVER_PORT
+              value: "8082"
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+            - name: DB_URL
+              value: "jdbc:mysql://127.0.0.1:3306/moruparkdb?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Seoul"
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: morupark-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: morupark-config
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: morupark-config
+                  key: REDIS_PORT
+            - name: JAVA_OPTS
+              valueFrom:
+                configMapKeyRef:
+                  name: morupark-config
+                  key: JAVA_OPTS
+            - name: QUEUE_MAX_SIZE
+              valueFrom:
+                configMapKeyRef:
+                  name: morupark-config
+                  key: QUEUE_MAX_SIZE
+            - name: QUEUE_PROCESSING_INTERVAL
+              valueFrom:
+                configMapKeyRef:
+                  name: morupark-config
+                  key: QUEUE_PROCESSING_INTERVAL
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: morupark-gcp-secrets
+                  key: DB_USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: morupark-gcp-secrets
+                  key: DB_PASSWORD
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: morupark-gcp-secrets
+                  key: REDIS_PASSWORD
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Xms512m -Xmx1024m -XX:MaxMetaspaceSize=256m -XX:+ExitOnOutOfMemoryError"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0
+          args:
+#            - "--private-ip" # cloud sql을 public으로 수정
+            - "--structured-logs"
+            - "--port=3306"
+            - "yourssu-morupark:asia-northeast3:morupark-db-public"
+          securityContext:
+            runAsNonRoot: true
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "50m"

@@ -1,0 +1,63 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: morupark-prod
+
+namespace: morupark-prod
+
+resources:
+  - namespace.yaml
+  - ../../components/auth-service
+  - ../../components/queue-service
+  - ingress.yaml
+
+patches:
+  - path: auth-service-patch.yaml
+    target:
+      kind: Deployment
+      name: auth-service
+  - path: queue-service-patch.yaml
+    target:
+      kind: Deployment
+      name: queue-service
+  - path: auth-hpa-patch.yaml
+    target:
+      kind: HorizontalPodAutoscaler
+      name: auth-service-hpa
+  - path: queue-hpa-patch.yaml
+    target:
+      kind: HorizontalPodAutoscaler
+      name: queue-service-hpa
+
+labels:
+  - pairs:
+      environment: production
+      app.kubernetes.io/instance: morupark-prod
+
+images:
+  - name: morupark/auth
+    newTag: v1.0.0
+  - name: morupark/queue
+    newTag: v1.0.0
+
+configMapGenerator:
+  - name: morupark-config
+    literals:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_URL=jdbc:mysql://morupark-rds.cluster-xxxxx.ap-northeast-2.rds.amazonaws.com:3306/morupark
+      - DB_DRIVER=com.mysql.cj.jdbc.Driver
+      - KAFKA_BOOTSTRAP_SERVERS=morupark-kafka.xxxxx.c2.kafka.ap-northeast-2.amazonaws.com:9092
+      - REDIS_HOST=morupark-redis.xxxxx.cache.amazonaws.com
+      - REDIS_PORT=6379
+      - JAVA_OPTS=-Xmx1g -Xms512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -Dspring.profiles.active=prod
+      - QUEUE_MAX_SIZE=10000
+      - QUEUE_PROCESSING_INTERVAL=1000
+
+secretGenerator:
+  - name: morupark-secrets
+    literals:
+      - JWT_SECRET=cHJvZC1zdHJvbmctand0LXNlY3JldC1rZXktZm9yLXByb2R1Y3Rpb24=
+      - DB_USERNAME=cHJvZF91c2Vy
+      - DB_PASSWORD=cHJvZF9wYXNzd29yZA==
+      - REDIS_PASSWORD=cmVkaXNfcHJvZF9wYXNzd29yZA==

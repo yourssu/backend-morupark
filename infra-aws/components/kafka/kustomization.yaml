@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: kafka
+
+resources:
+  - kafka-cluster.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: kafka-cluster
+      app.kubernetes.io/component: messaging
+      app.kubernetes.io/part-of: morupark-msa
