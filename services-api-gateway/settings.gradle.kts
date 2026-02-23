@@ -4,4 +4,4 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
-rootProject.name = "queue-service"
+rootProject.name = "services-api-gateway"
