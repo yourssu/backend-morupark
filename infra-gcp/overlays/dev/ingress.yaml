@@ -1,0 +1,38 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: morupark-dev-ingress
+  namespace: morupark-dev
+  labels:
+    app.kubernetes.io/name: morupark-dev-ingress
+    app.kubernetes.io/part-of: morupark-msa
+    environment: development
+  annotations:
+    # Using default GKE Ingress controller (gce)
+    kubernetes.io/ingress.class: "gce"
+spec:
+  rules:
+  - host: morupark-dev.local
+    http:
+      paths:
+      - path: /auth
+        pathType: Prefix
+        backend:
+          service:
+            name: auth-service
+            port:
+              number: 8081
+      - path: /queue
+        pathType: Prefix
+        backend:
+          service:
+            name: queue-service
+            port:
+              number: 8082
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: auth-service
+            port:
+              number: 8081

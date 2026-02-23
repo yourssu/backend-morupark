@@ -1,0 +1,61 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: morupark-dev
+
+namespace: morupark-dev
+
+resources:
+  - namespace.yaml
+  - ../../components/auth-service
+  - ../../components/queue-service
+  - ../../components/redis
+  - ../../components/kafka
+  - ingress.yaml
+
+patches:
+  - path: auth-service-patch.yaml
+    target:
+      kind: Deployment
+      name: auth-service
+  - path: queue-service-patch.yaml
+    target:
+      kind: Deployment
+      name: queue-service
+  - path: redis-patch.yaml
+    target:
+      kind: Deployment
+      name: redis
+
+labels:
+  - pairs:
+      environment: development
+      app.kubernetes.io/instance: morupark-dev
+
+images:
+  - name: morupark/auth
+    newTag: dev-latest
+  - name: morupark/queue
+    newTag: dev-latest
+
+configMapGenerator:
+  - name: morupark-config
+    literals:
+      - SPRING_PROFILES_ACTIVE=dev
+      - DB_URL=jdbc:h2:mem:devdb
+      - DB_DRIVER=org.h2.Driver
+      - KAFKA_BOOTSTRAP_SERVERS=kafka.morupark-dev.svc.cluster.local:9092
+      - REDIS_HOST=redis.morupark-dev.svc.cluster.local
+      - REDIS_PORT=6379
+      - JAVA_OPTS=-Xmx256m -Xms128m -Dspring.profiles.active=dev
+      - QUEUE_MAX_SIZE=100
+      - QUEUE_PROCESSING_INTERVAL=10000
+
+secretGenerator:
+  - name: morupark-secrets
+    literals:
+      - JWT_SECRET=dGhpc0lzQVNlY3JldEtleUZvckpXVEdlbmVyYXRpb25DaGFuZ2VNZQ==
+      - DB_USERNAME=bW9ydXBhcms=
+      - DB_PASSWORD=Y2hhbmdlbWUxMjM=
+      - REDIS_PASSWORD=""
