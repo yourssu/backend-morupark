@@ -4,30 +4,6 @@ server:
 spring:
   application:
     name: auth-service
-  
-  datasource:
-    url: ${DB_URL:jdbc:h2:mem:authdb}
-    username: ${DB_USERNAME:sa}
-    password: ${DB_PASSWORD:}
-    driver-class-name: ${DB_DRIVER:org.h2.Driver}
-  
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-
-  kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-    consumer:
-      group-id: auth-service
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
 
 management:
   endpoint:
@@ -44,15 +20,10 @@ security:
   jwt:
     secret: thisIsASecretKeyForJWTGenerationChangeMe
     access-token-expiration: 86400000 # 24 hours in milliseconds
-    refresh-token-expiration: 604800000 # 7 days in milliseconds
-    expiration : 864000000 # 24 hours in milliseconds
-  admin:
-    admin-key: ${ADMIN_KEY:defaultAdminKey}
 
 logging:
   level:
     com.yourssu.morupark: DEBUG
-    org.springframework.security: DEBUG
 
 ---
 spring:

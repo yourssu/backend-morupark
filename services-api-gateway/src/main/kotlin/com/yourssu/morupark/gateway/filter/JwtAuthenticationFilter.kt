@@ -27,23 +27,26 @@ class JwtAuthenticationFilter(
             val token = authHeader.substring(7)
 
             val secretKey = hmacShaKeyFor(jwtSecret.toByteArray())
-            val subject = try {
+            val claims = try {
                 Jwts.parser()
                     .verifyWith(secretKey)
                     .build()
                     .parseSignedClaims(token)
                     .payload
-                    .subject
             } catch (e: JwtException) {
                 exchange.response.statusCode = HttpStatus.UNAUTHORIZED
                 return@GatewayFilter exchange.response.setComplete()
             }
 
+            val studentId = claims.subject
+            val phoneNumber = claims["phoneNumber"] as? String ?: ""
+
             chain.filter(
                 exchange.mutate()
                     .request(
                         exchange.request.mutate()
-                            .header("X-User-Id", subject)
+                            .header("X-User-Id", studentId)
+                            .header("X-Phone-Number", phoneNumber)
                             .build()
                     )
                     .build()

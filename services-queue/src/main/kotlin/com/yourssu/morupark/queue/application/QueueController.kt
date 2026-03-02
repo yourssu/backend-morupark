@@ -36,7 +36,10 @@ class QueueController(
     }
 
     @GetMapping("/test")
-    fun test(@RequestHeader("X-User-Id") userId: String): ResponseEntity<Map<String, String?>> {
-        return ResponseEntity.ok(mapOf("message" to "gateway 연결 성공", "userId" to userId))
+    fun test(
+        @RequestHeader("X-User-Id") userId: String,
+        @RequestHeader("X-Phone-Number") phoneNumber: String
+    ): ResponseEntity<Map<String, String?>> {
+        return ResponseEntity.ok(mapOf("message" to "gateway 연결 성공", "userId" to userId, "phonNumber" to phoneNumber))
     }
 }
