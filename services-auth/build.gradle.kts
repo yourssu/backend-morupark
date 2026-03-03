@@ -27,6 +27,12 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 
+    // Kafka
+    implementation("org.springframework.kafka:spring-kafka")
+    implementation("com.google.cloud.hosted.kafka:managed-kafka-auth-login-handler:1.0.1")
+    implementation("com.google.cloud:spring-cloud-gcp-starter:5.1.2")
+    implementation("org.apache.kafka:kafka-clients")
+
     // JWT
     implementation("io.jsonwebtoken:jjwt-api:0.12.3")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.3")
