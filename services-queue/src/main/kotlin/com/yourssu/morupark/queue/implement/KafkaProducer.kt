@@ -7,10 +7,14 @@ import org.springframework.stereotype.Component
 class KafkaProducer(
     private val kafkaTemplate: KafkaTemplate<String, String>
 ) {
-    private val TOPIC: String = "WAITING"
+    companion object {
+        private const val TOPIC: String = "WAITING"
+        private const val PARTITION_COUNT: Int = 500
+    }
 
-    fun send(accessToken: String) {
+    fun send(studentId: String, phoneNumber: String) {
         val timestamp = System.nanoTime()
-        kafkaTemplate.send(TOPIC, (timestamp % 500).toInt(), timestamp, accessToken, accessToken)
+        val message = "$studentId|$phoneNumber"
+        kafkaTemplate.send(TOPIC, (timestamp % PARTITION_COUNT).toInt(), timestamp, studentId, message)
     }
 }
