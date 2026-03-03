@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 @Component
 class StatusOperator(
     private val queueAdapter: QueueAdapter,
-    private val kafkaProducer: KafkaProducer,
+    private val ticketProcessRequestProducer: TicketProcessRequestProducer,
 
     @Value("\${queue.max-size}")
     private val maxSize: Long,
@@ -23,7 +23,7 @@ class StatusOperator(
             queueAdapter.saveStatus(waitingToken, TicketStatus.PROCESSING.name)
             val userInfo = queueAdapter.getUserInfo(waitingToken) ?: continue
             val (studentId, phoneNumber) = userInfo.split("|")
-            kafkaProducer.send(studentId, phoneNumber)
+            ticketProcessRequestProducer.send(waitingToken, studentId, phoneNumber)
         }
     }
 }
