@@ -2,6 +2,8 @@ package com.yourssu.morupark.queue.implement
 
 import com.yourssu.morupark.queue.business.TicketStatus
 import org.springframework.kafka.annotation.KafkaListener
+import org.springframework.kafka.annotation.RetryableTopic
+import org.springframework.retry.annotation.Backoff
 import org.springframework.stereotype.Component
 
 @Component
@@ -14,6 +16,11 @@ class TicketResultConsumer(
     }
 
     @KafkaListener(topics = [TOPIC], groupId = GROUP_ID)
+    @RetryableTopic(
+        attempts = "4",
+        backoff = Backoff(delay = 1000, multiplier = 2.0),
+        dltTopicSuffix = ".dlt"
+    )
     fun consume(message: String) {
         if (message == "SOLD_OUT") {
             val remaining = queueAdapter.popAllFromWaitingQueue()
