@@ -1,9 +1,9 @@
 package com.yourssu.morupark.goods.business
 
 import com.yourssu.morupark.goods.domain.Winner
-import com.yourssu.morupark.goods.implement.TicketResultProducer
 import com.yourssu.morupark.goods.implement.GoodsRepository
 import com.yourssu.morupark.goods.implement.WinnerRepository
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.random.Random
@@ -12,7 +12,7 @@ import kotlin.random.Random
 class GoodsService(
     private val winnerRepository: WinnerRepository,
     private val goodsRepository: GoodsRepository,
-    private val ticketResultProducer: TicketResultProducer,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
     companion object {
         private const val GOODS_ID = 1L
@@ -21,7 +21,7 @@ class GoodsService(
     @Transactional
     fun processTicket(waitingToken: String, studentId: String, phoneNumber: String) {
         if (!isWinner()) {
-            ticketResultProducer.sendFailed(waitingToken, "당첨되지 않았습니다.")
+            eventPublisher.publishEvent(TicketFailedEvent(waitingToken, "당첨되지 않았습니다."))
             return
         }
 
@@ -29,12 +29,12 @@ class GoodsService(
 
         if (updated > 0) {
             winnerRepository.save(Winner(studentId = studentId, phoneNumber = phoneNumber))
-            ticketResultProducer.sendSuccess(waitingToken)
+            eventPublisher.publishEvent(TicketSuccessEvent(waitingToken))
         } else {
-            ticketResultProducer.sendFailed(waitingToken, "재고 없음")
+            eventPublisher.publishEvent(TicketFailedEvent(waitingToken, "재고 없음"))
             val marked = goodsRepository.markSoldOut(GOODS_ID)
             if (marked > 0) {
-                ticketResultProducer.sendSoldOut()
+                eventPublisher.publishEvent(SoldOutEvent())
             }
         }
     }
