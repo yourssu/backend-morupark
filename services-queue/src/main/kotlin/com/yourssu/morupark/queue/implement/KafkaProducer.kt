@@ -9,8 +9,9 @@ class KafkaProducer(
 ) {
     private val TOPIC: String = "WAITING"
 
-    fun send(accessToken: String) {
+    fun send(studentId: String, phoneNumber: String) {
         val timestamp = System.nanoTime()
-        kafkaTemplate.send(TOPIC, (timestamp % 500).toInt(), timestamp, accessToken, accessToken)
+        val message = "$studentId|$phoneNumber"
+        kafkaTemplate.send(TOPIC, (timestamp % 500).toInt(), timestamp, studentId, message)
     }
 }
