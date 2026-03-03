@@ -1,10 +1,12 @@
 package com.yourssu.morupark.queue.business
 
+import com.yourssu.morupark.queue.application.EnqueueResponse
 import com.yourssu.morupark.queue.implement.AuthAdapter
 import com.yourssu.morupark.queue.implement.KafkaProducer
 import com.yourssu.morupark.queue.implement.QueueAdapter
 import com.yourssu.morupark.queue.implement.WaitingTimeEstimator
 import org.springframework.stereotype.Service
+import java.util.UUID
 
 @Service
 class QueueService(
@@ -14,21 +16,10 @@ class QueueService(
     private val waitingTimeEstimator: WaitingTimeEstimator
 ) {
 
-    fun enqueue(accessToken: String) {
-        // Validate token by getting user info
-        authAdapter.getUserInfo(accessToken)
-        kafkaProducer.send(accessToken)
-    }
-
-    fun getWaitingToken(accessToken: String): String {
-        val userInfo = authAdapter.getUserInfo(accessToken)
-        val platformId = userInfo.platform.platformId
-
-        if (!queueAdapter.isInQueue(accessToken, platformId)) {
-            throw IllegalStateException("Access token is not in queue")
-        }
-
-        return authAdapter.getWaitingToken(accessToken)
+    fun enqueue(studentId: String, phoneNumber: String): EnqueueResponse {
+        val waitingToken = UUID.randomUUID().toString()
+        queueAdapter.addToWaitingQueue(waitingToken, studentId, phoneNumber, System.currentTimeMillis())
+        return EnqueueResponse(waitingToken)
     }
 
     fun getTicketStatusResult(accessToken: String, waitingToken: String): Any {
