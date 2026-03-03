@@ -11,6 +11,7 @@ class QueueAdapter(
     companion object {
         private const val WAITING_KEY = "queue:waiting"
         private const val USER_HASH_KEY = "queue:user"
+        private const val STATUS_HASH_KEY = "queue:status"
     }
 
     fun addToWaitingQueue(waitingToken: String, studentId: String, phoneNumber: String, timestamp: Long) {
@@ -36,5 +37,13 @@ class QueueAdapter(
 
     fun isInQueue(waitingToken: String): Boolean {
         return redisTemplate.opsForZSet().score(WAITING_KEY, waitingToken) != null
+    }
+
+    fun saveStatus(waitingToken: String, status: String) {
+        redisTemplate.opsForHash<String, String>().put(STATUS_HASH_KEY, waitingToken, status)
+    }
+
+    fun getStatusFromResult(waitingToken: String): String? {
+        return redisTemplate.opsForHash<String, String>().get(STATUS_HASH_KEY, waitingToken)
     }
 }
