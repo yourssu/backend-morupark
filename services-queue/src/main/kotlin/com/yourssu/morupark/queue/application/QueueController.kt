@@ -15,15 +15,12 @@ class QueueController(
 ) {
 
     @PostMapping
-    fun post(@RequestHeader("Authorization") accessToken: String): ResponseEntity<Void> {
-        queueService.enqueue(accessToken)
-        return ResponseEntity.accepted().build()
-    }
-
-    @GetMapping
-    fun getTicket(@RequestHeader("Authorization") accessToken: String): ResponseEntity<String> {
-        val waitingToken = queueService.getWaitingToken(accessToken)
-        return ResponseEntity.ok().body(waitingToken)
+    fun enqueue(
+        @RequestHeader("X-User-Id") studentId: String,
+        @RequestHeader("X-Phone-Number") phoneNumber: String,
+    ): ResponseEntity<EnqueueResponse> {
+        val enqueueResponse = queueService.enqueue(studentId, phoneNumber)
+        return ResponseEntity.accepted().body(enqueueResponse)
     }
 
     @GetMapping("/status")
@@ -33,13 +30,5 @@ class QueueController(
     ): ResponseEntity<Any> {
         val result = queueService.getTicketStatusResult(accessToken, waitingToken)
         return ResponseEntity.ok().body(result)
-    }
-
-    @GetMapping("/test")
-    fun test(
-        @RequestHeader("X-User-Id") userId: String,
-        @RequestHeader("X-Phone-Number") phoneNumber: String
-    ): ResponseEntity<Map<String, String?>> {
-        return ResponseEntity.ok(mapOf("message" to "gateway 연결 성공", "userId" to userId, "phonNumber" to phoneNumber))
     }
 }
