@@ -10,4 +10,8 @@ interface GoodsRepository : JpaRepository<Goods, Long> {
     @Modifying
     @Query("UPDATE Goods g SET g.stock = g.stock - 1 WHERE g.id = :id AND g.stock > 0")
     fun decrementStock(id: Long): Int
+
+    @Modifying
+    @Query("UPDATE Goods g SET g.soldOut = true WHERE g.id = :id AND g.soldOut = false")
+    fun markSoldOut(id: Long): Int
 }
