@@ -46,4 +46,12 @@ class QueueAdapter(
     fun getStatusFromResult(waitingToken: String): String? {
         return redisTemplate.opsForHash<String, String>().get(STATUS_HASH_KEY, waitingToken)
     }
+
+    fun popAllFromWaitingQueue(): Set<String>? {
+        val items = redisTemplate.opsForZSet().range(WAITING_KEY, 0, -1)
+        if (!items.isNullOrEmpty()) {
+            redisTemplate.opsForZSet().remove(WAITING_KEY, *items.toTypedArray())
+        }
+        return items
+    }
 }

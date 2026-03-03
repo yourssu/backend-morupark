@@ -32,7 +32,10 @@ class GoodsService(
             ticketResultProducer.sendSuccess(waitingToken)
         } else {
             ticketResultProducer.sendFailed(waitingToken, "재고 없음")
-            ticketResultProducer.sendSoldOut()
+            val marked = goodsRepository.markSoldOut(GOODS_ID)
+            if (marked > 0) {
+                ticketResultProducer.sendSoldOut()
+            }
         }
     }
 

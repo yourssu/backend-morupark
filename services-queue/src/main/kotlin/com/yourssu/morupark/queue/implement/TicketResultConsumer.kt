@@ -1,5 +1,6 @@
 package com.yourssu.morupark.queue.implement
 
+import com.yourssu.morupark.queue.business.TicketStatus
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Component
 
@@ -15,7 +16,10 @@ class TicketResultConsumer(
     @KafkaListener(topics = [TOPIC], groupId = GROUP_ID)
     fun consume(message: String) {
         if (message == "SOLD_OUT") {
-            // TODO: 남은 대기자 전부 FAILED 처리 (다음 이슈)
+            val remaining = queueAdapter.popAllFromWaitingQueue()
+            remaining?.forEach { token ->
+                queueAdapter.saveStatus(token, "${TicketStatus.FAILED.name}:재고 없음")
+            }
             return
         }
 

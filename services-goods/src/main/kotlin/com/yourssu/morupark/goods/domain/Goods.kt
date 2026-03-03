@@ -9,5 +9,8 @@ class Goods(
     val id: Long = 1L,
 
     @Column(nullable = false)
-    val stock: Int
+    val stock: Int,
+
+    @Column(nullable = false)
+    val soldOut: Boolean = false
 )
