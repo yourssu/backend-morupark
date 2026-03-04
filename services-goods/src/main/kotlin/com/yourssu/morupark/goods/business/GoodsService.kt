@@ -1,7 +1,7 @@
 package com.yourssu.morupark.goods.business
 
-import com.yourssu.morupark.goods.domain.Winner
 import com.yourssu.morupark.goods.implement.GoodsRepository
+import com.yourssu.morupark.goods.implement.Winner
 import com.yourssu.morupark.goods.implement.WinnerRepository
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
