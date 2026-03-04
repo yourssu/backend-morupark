@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: goods-service
+  namespace: morupark-prod
+spec:
+  replicas: 5
+  template:
+    spec:
+      containers:
+      - name: goods-service
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        env:
+          - name: SPRING_KAFKA_PROPERTIES_SECURITY_PROTOCOL
+            valueFrom: { configMapKeyRef: { name: morupark-config, key: SPRING_KAFKA_PROPERTIES_SECURITY_PROTOCOL } }
+          - name: SPRING_KAFKA_PROPERTIES_SASL_MECHANISM
+            valueFrom: { configMapKeyRef: { name: morupark-config, key: SPRING_KAFKA_PROPERTIES_SASL_MECHANISM } }
+          - name: SPRING_KAFKA_PROPERTIES_SASL_JAAS_CONFIG
+            valueFrom: { configMapKeyRef: { name: morupark-config, key: SPRING_KAFKA_PROPERTIES_SASL_JAAS_CONFIG } }
+          - name: SPRING_KAFKA_PROPERTIES_SASL_LOGIN_CALLBACK_HANDLER_CLASS
+            valueFrom: { configMapKeyRef: { name: morupark-config, key: SPRING_KAFKA_PROPERTIES_SASL_LOGIN_CALLBACK_HANDLER_CLASS } }

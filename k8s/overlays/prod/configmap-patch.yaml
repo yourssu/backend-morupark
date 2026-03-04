@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: morupark-config
+  namespace: morupark-prod
+data:
+  SPRING_PROFILES_ACTIVE: "prod"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  KAFKA_BOOTSTRAP_SERVERS: "morupark-kafka-prod-bootstrap.asia-northeast3.managedkafka.com:9092"
+  SPRING_KAFKA_PROPERTIES_SECURITY_PROTOCOL: "SASL_SSL"
+  SPRING_KAFKA_PROPERTIES_SASL_MECHANISM: "OAUTHBEARER"
+  SPRING_KAFKA_PROPERTIES_SASL_JAAS_CONFIG: "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required;"
+  SPRING_KAFKA_PROPERTIES_SASL_LOGIN_CALLBACK_HANDLER_CLASS: "com.google.cloud.kafka.oauthbearer.OauthBearerLoginCallbackHandler"

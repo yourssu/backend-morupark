@@ -1,0 +1,8 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: goods-service-hpa
+  namespace: morupark-prod
+spec:
+  minReplicas: 5
+  maxReplicas: 30
