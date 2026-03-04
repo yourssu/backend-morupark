@@ -33,6 +33,3 @@ spring:
       retries: 3
       properties:
         enable.idempotence: true
-
-goods:
-  stock: ${GOODS_STOCK:100}
