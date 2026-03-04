@@ -13,7 +13,7 @@ class TicketProcessRequestProducer(
     }
 
     fun send(waitingToken: String, studentId: String, phoneNumber: String) {
-        val timestamp = System.nanoTime()
+        val timestamp = System.currentTimeMillis()
         val message = "$waitingToken|$studentId|$phoneNumber"
         kafkaTemplate.send(TOPIC, (timestamp % PARTITION_COUNT).toInt(), timestamp, studentId, message)
     }
