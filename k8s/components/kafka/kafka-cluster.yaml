@@ -4,7 +4,7 @@ metadata:
   name: kafka
   namespace: morupark-prod
 spec:
-  serviceName: kafka
+  serviceName: kafka-service
   replicas: 1
   selector:
     matchLabels:
@@ -47,7 +47,7 @@ spec:
             - name: KAFKA_CFG_LISTENERS
               value: "PLAINTEXT://:9092"
             - name: KAFKA_CFG_ADVERTISED_LISTENERS
-              value: "PLAINTEXT://kafka-0.kafka.morupark-prod.svc.cluster.local:9092"
+              value: "PLAINTEXT://kafka-service:9092"
             - name: KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR
               value: "1"
             - name: KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
@@ -99,9 +99,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: kafka
+  name: kafka-service
   namespace: morupark-prod
 spec:
+  clusterIP: None
   ports:
     - port: 9092
       targetPort: 9092

@@ -1,6 +1,19 @@
 server:
   port: 8083
 
+management:
+  endpoints:
+    web:
+      exposure:
+        # health 엔드포인트를 웹으로 노출함
+        include: "health,info"
+  endpoint:
+    health:
+      # liveness, readiness 전용 경로를 활성화함 (404 에러 해결책)
+      probes:
+        enabled: true
+      show-details: always
+
 spring:
   application:
     name: goods-service
@@ -21,9 +34,12 @@ spring:
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    properties:
+      # 내부 카프카를 쓰기로 했으므로 기본값을 PLAINTEXT로 설정
+      security.protocol: ${SPRING_KAFKA_PROPERTIES_SECURITY_PROTOCOL:PLAINTEXT}
     consumer:
       group-id: goods-group
-      auto-offset-reset: earliest
+      auto-offset-reset: earliest 
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
     producer:
