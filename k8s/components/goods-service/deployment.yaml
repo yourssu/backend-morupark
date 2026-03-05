@@ -28,8 +28,8 @@ spec:
         fsGroup: 1001
       containers:
         - name: goods-service
-          image: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/goods-service:dev-2
-          imagePullPolicy: IfNotPresent
+          image: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/goods-service:latest
+          imagePullPolicy: Always
           ports:
             - name: http
               containerPort: 8083
@@ -61,15 +61,15 @@ spec:
           livenessProbe:
             httpGet:
               path: /actuator/health
-              port: http
+              port: 8083
             initialDelaySeconds: 120
             periodSeconds: 30
             timeoutSeconds: 5
             failureThreshold: 3
           readinessProbe:
             httpGet:
-              path: /actuator/health/readiness
-              port: http
+              path: /actuator/health
+              port: 8083
             initialDelaySeconds: 60
             periodSeconds: 10
             timeoutSeconds: 3
@@ -92,10 +92,19 @@ spec:
           args:
             - "--structured-logs"
             - "--port=3306"
-            - "yourssu-morupark:asia-northeast3:morupark-db-prod"
+            - "$(SQL_INSTANCE_CONNECTION_NAME)"
+          env:
+            - name: SQL_INSTANCE_CONNECTION_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: morupark-sql-config
+                  key: SQL_INSTANCE_CONNECTION_NAME
           securityContext:
             runAsNonRoot: true
           resources:
             requests:
               memory: "128Mi"
               cpu: "50m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"

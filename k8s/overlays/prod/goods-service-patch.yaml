@@ -5,10 +5,20 @@ metadata:
   namespace: morupark-prod
 spec:
   replicas: 5
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: goods-service
+      app.kubernetes.io/component: goods
   template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: goods-service
+        app.kubernetes.io/component: goods
+        app.kubernetes.io/part-of: morupark-msa
     spec:
       containers:
       - name: goods-service
+        image: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/goods-service:latest
         resources:
           requests:
             memory: "512Mi"
@@ -17,11 +27,17 @@ spec:
             memory: "1Gi"
             cpu: "1000m"
         env:
+          - name: KAFKA_BOOTSTRAP_SERVERS
+            valueFrom:
+              configMapKeyRef:
+                name: morupark-config
+                key: KAFKA_BOOTSTRAP_SERVERS
           - name: SPRING_KAFKA_PROPERTIES_SECURITY_PROTOCOL
-            valueFrom: { configMapKeyRef: { name: morupark-config, key: SPRING_KAFKA_PROPERTIES_SECURITY_PROTOCOL } }
-          - name: SPRING_KAFKA_PROPERTIES_SASL_MECHANISM
-            valueFrom: { configMapKeyRef: { name: morupark-config, key: SPRING_KAFKA_PROPERTIES_SASL_MECHANISM } }
-          - name: SPRING_KAFKA_PROPERTIES_SASL_JAAS_CONFIG
-            valueFrom: { configMapKeyRef: { name: morupark-config, key: SPRING_KAFKA_PROPERTIES_SASL_JAAS_CONFIG } }
-          - name: SPRING_KAFKA_PROPERTIES_SASL_LOGIN_CALLBACK_HANDLER_CLASS
-            valueFrom: { configMapKeyRef: { name: morupark-config, key: SPRING_KAFKA_PROPERTIES_SASL_LOGIN_CALLBACK_HANDLER_CLASS } }
+            valueFrom:
+              configMapKeyRef:
+                name: morupark-config
+                key: SPRING_KAFKA_PROPERTIES_SECURITY_PROTOCOL
+          - name: MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED
+            value: "true"
+          - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+            value: "health,info,metrics"
