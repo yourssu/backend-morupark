@@ -45,8 +45,9 @@ resource "google_project_iam_member" "cloudsql_client" {
 }
 
 ############################################
-# Kafka 권한 (Managed Kafka 접근용)
+# Kafka 권한 (Managed Kafka 접근용) - 삭제 / 주석 처리함
 ############################################
+/*
 resource "google_project_iam_member" "kafka_client" {
   for_each = local.services
   project  = local.project_id
@@ -54,6 +55,7 @@ resource "google_project_iam_member" "kafka_client" {
   role   = "roles/managedkafka.client"
   member = google_service_account.gsa[each.key].member
 }
+*/
 
 ############################################
 # GKE Node Artifact Registry Access

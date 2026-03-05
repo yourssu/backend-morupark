@@ -6,8 +6,18 @@ metadata:
 data:
   SPRING_PROFILES_ACTIVE: "prod"
   SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
-  KAFKA_BOOTSTRAP_SERVERS: "morupark-kafka-prod-bootstrap.asia-northeast3.managedkafka.com:9092"
-  SPRING_KAFKA_PROPERTIES_SECURITY_PROTOCOL: "SASL_SSL"
-  SPRING_KAFKA_PROPERTIES_SASL_MECHANISM: "OAUTHBEARER"
-  SPRING_KAFKA_PROPERTIES_SASL_JAAS_CONFIG: "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required;"
-  SPRING_KAFKA_PROPERTIES_SASL_LOGIN_CALLBACK_HANDLER_CLASS: "com.google.cloud.kafka.oauthbearer.OauthBearerLoginCallbackHandler"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-service:9092"
+  SPRING_KAFKA_PROPERTIES_SECURITY_PROTOCOL: "PLAINTEXT"
+
+  # Managed Kafka (Google Cloud) settings - Commented out for future use
+  # KAFKA_BOOTSTRAP_SERVERS: "morupark-kafka-prod-bootstrap.asia-northeast3.managedkafka.com:9092"
+  # SPRING_KAFKA_PROPERTIES_SECURITY_PROTOCOL: "SASL_SSL"
+  # SPRING_KAFKA_PROPERTIES_SASL_MECHANISM: "OAUTHBEARER"
+  # SPRING_KAFKA_PROPERTIES_SASL_JAAS_CONFIG: "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required;"
+  # SPRING_KAFKA_PROPERTIES_SASL_LOGIN_CALLBACK_HANDLER_CLASS: "com.google.cloud.hosted.kafka.auth.OAuthBearerLoginCallbackHandler"
+
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  JAVA_OPTS: "-Xmx512m -Xms256m"
+  QUEUE_MAX_SIZE: "1000"
+  QUEUE_PROCESSING_INTERVAL: "5000"

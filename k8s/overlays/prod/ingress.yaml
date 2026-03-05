@@ -8,10 +8,10 @@ metadata:
     app.kubernetes.io/part-of: morupark-msa
     environment: production
   annotations:
-    kubernetes.io/ingress.class: "gce"
     kubernetes.io/ingress.global-static-ip-name: "morupark-static-ip"
     networking.gke.io/managed-certificates: "morupark-managed-cert-prod"
 spec:
+  ingressClassName: "gce"
   rules:
   - host: api.morupark.urssu.com
     http:

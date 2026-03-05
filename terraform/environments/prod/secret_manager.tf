@@ -13,7 +13,7 @@ resource "google_secret_manager_secret" "admin_key" {
 }
 
 resource "google_service_account" "eso_sa" {
-  account_id   = "external-secrets-sa"
+  account_id   = "eso-sa-prod"
   display_name = "External Secrets Operator GSA"
 }
 

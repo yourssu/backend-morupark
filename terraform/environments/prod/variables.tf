@@ -48,3 +48,8 @@ variable "namespace" {
   type    = string
   default = "morupark-prod"
 }
+
+variable "GOOGLE_CREDENTIALS" {
+  description = "GCP Credentials path or JSON"
+  type        = string
+}
