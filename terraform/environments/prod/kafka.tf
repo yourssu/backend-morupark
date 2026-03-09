@@ -1,3 +1,4 @@
+/*
 # GCP Managed Service for Apache Kafka API 활성화
 resource "google_project_service" "kafka_api" {
   project            = var.project_id
@@ -29,3 +30,4 @@ resource "google_managed_kafka_cluster" "morupark_kafka" {
     env = "prod"
   }
 }
+*/
