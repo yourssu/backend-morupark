@@ -13,6 +13,7 @@ resources:
   - ../../components/api-gateway
   - ../../components/goods-service
   - ../../components/redis
+  - ../../components/kafka
   - ingress.yaml
 
 patches:
