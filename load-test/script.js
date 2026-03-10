@@ -1,79 +1,73 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 
-// 테스트 설정 (Stages 기반 부하 시뮬레이션)
 export const options = {
   stages: [
-    { duration: '30s', target: 50 },  // 30초 동안 50명까지 늘림 (Warm-up)
-    { duration: '2m', target: 100 },  // 2분 동안 100명까지 늘림
-    { duration: '5m', target: 100 },  // 5분 동안 100명 유지 (Steady state)
-    { duration: '1m', target: 0 },    // 1분 동안 서서히 종료 (Cool-down)
+    { duration: '30s', target: 50 },
+    { duration: '2m', target: 100 },
+    { duration: '5m', target: 100 },
+    { duration: '1m', target: 0 },
   ],
   thresholds: {
-    http_req_failed: ['rate<0.01'], // 1% 미만 에러 허용
-    http_req_duration: ['p(95)<500'], // 95%의 요청은 500ms 이내 처리
+    http_req_failed: ['rate<0.01'],
+    http_req_duration: ['p(95)<500'],
   },
 };
 
-// 기본 설정
-const BASE_URL = 'http://api.morupark.urssu.com/api'; // GCP Ingress 주소
+const BASE_URL = 'http://api.morupark.urssu.com/api';
 
 export default function () {
-  // 1. 로그인 (학번/전화번호 입력)
-  // 가상 사용자(VU) 번호와 반복 횟수(Iter)를 조합해 고유 식별자 생성
+  // 1. 로그인
   const studentId = `2024${__VU}${__ITER}`.slice(0, 10);
   const phoneNumber = `010${__VU}${__ITER}`.slice(0, 11);
 
-  const loginPayload = JSON.stringify({
+  const loginRes = http.post(`${BASE_URL}/auth/login`, JSON.stringify({
     studentId: studentId,
     phoneNumber: phoneNumber,
-  });
-
-  const headers = { 'Content-Type': 'application/json' };
-
-  const loginRes = http.post(`${BASE_URL}/auth/login`, loginPayload, { headers });
+  }), { headers: { 'Content-Type': 'application/json' } });
 
   const isLoginOk = check(loginRes, {
     'login: status is 200': (r) => r.status === 200,
     'login: has access token': (r) => r.json('accessToken') !== undefined,
   });
 
-  if (!isLoginOk) {
-    console.error(`Login failed for VU: ${__VU}, Iter: ${__ITER}. Status: ${loginRes.status}`);
-    return;
-  }
+  if (!isLoginOk) return;
 
-  const accessToken = loginRes.json('accessToken');
+  const accessToken = loginRes.json('accessToken'); 
 
-  // 2. 대기열 진입
-  const authHeaders = {
+  // 2. 대기열 진입 (이 단계에서는 waitingToken이 없으므로 Authorization만 보냄)
+  const enqueueHeaders = {
     'Authorization': `Bearer ${accessToken}`,
     'Content-Type': 'application/json',
   };
 
-  const queueRes = http.post(`${BASE_URL}/queues`, null, { headers: authHeaders });
+  const queueRes = http.post(`${BASE_URL}/queues`, null, { headers: enqueueHeaders });
 
   const isQueueOk = check(queueRes, {
     'enqueue: status is 202': (r) => r.status === 202,
     'enqueue: has waiting token': (r) => r.json('waitingToken') !== undefined,
   });
 
-  if (!isQueueOk) {
-      return;
-  }
+  if (!isQueueOk) return;
 
+  // 💡 드디어 여기서 waitingToken이 탄생함!
   const waitingToken = queueRes.json('waitingToken');
 
-  // 3. 대기열 상태 조회 (짧은 대기 후 1회 수행)
+  // 3. 대기열 상태 조회 (이제 waitingToken을 헤더에 실어 보냄)
   sleep(1);
 
-  const statusRes = http.get(`${BASE_URL}/queues/status?token=${waitingToken}`, { headers: authHeaders });
+  const statusHeaders = {
+    'Authorization': `Bearer ${accessToken}`,
+    'X-Waiting-Token': waitingToken, // 💡 이제 사용할 수 있음
+    'Content-Type': 'application/json',
+  };
+
+  const statusRes = http.get(`${BASE_URL}/queues/status`, { headers: statusHeaders });
 
   check(statusRes, {
     'status: status is 200': (r) => r.status === 200,
     'status: has result': (r) => r.json('status') !== undefined,
   });
 
-  // 각 VU 간의 1~2초 랜덤 지연 (Think Time)
   sleep(Math.random() * 1 + 1);
 }
