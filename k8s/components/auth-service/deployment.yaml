@@ -30,7 +30,7 @@ spec:
       containers:
         - name: auth-service
           image: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/auth-service:dev-2
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - name: http
               containerPort: 8081
@@ -41,7 +41,7 @@ spec:
             - name: SPRING_PROFILES_ACTIVE
               value: "prod"
             - name: DB_URL
-              value: "jdbc:mysql://127.0.0.1:3306/moruparkdb?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Seoul"
+              value: "jdbc:mysql://127.0.0.1:3306/moruparkdb_prod?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Seoul"
             - name: KAFKA_BOOTSTRAP_SERVERS
               valueFrom:
                 configMapKeyRef:
