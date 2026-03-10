@@ -18,7 +18,7 @@ management:
 
 security:
   jwt:
-    secret: thisIsASecretKeyForJWTGenerationChangeMe
+    secret: ${JWT_SECRET:thisIsASecretKeyForJWTGenerationChangeMe}  
     access-token-expiration: 86400000 # 24 hours in milliseconds
 
 logging:
@@ -46,15 +46,20 @@ spring:
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
     properties:
-      security.protocol: SASL_SSL
-      sasl.mechanism: OAUTHBEARER
-      sasl.jaas.config: org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required;
-      sasl.login.callback.handler.class: com.google.cloud.hosted.kafka.auth.GcpLoginCallbackHandler
+      security.protocol: PLAINTEXT
+#      security.protocol: SASL_SSL
+#      sasl.mechanism: OAUTHBEARER
+#      sasl.jaas.config: org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required;
+#      sasl.login.callback.handler.class: com.google.cloud.hosted.kafka.auth.GcpLoginCallbackHandler
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     show-sql: false
+
+security:
+  jwt:
+    secret: ${JWT_SECRET}
 
 logging:
   level:

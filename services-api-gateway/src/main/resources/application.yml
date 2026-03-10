@@ -44,6 +44,9 @@ spring:
             - Path=/api/queues/**
           filters:
             - JwtAuthenticationFilter
+security:
+  jwt:
+    secret: ${JWT_SECRET}
 
 logging:
   level:
