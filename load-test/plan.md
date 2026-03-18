@@ -45,7 +45,7 @@
 
 ### Step 1: 부하 발생 (Terminal 1)
 ```powershell
-k6 run ./load-test/script.js
+k6 run ./load-test/script_???.js
 ```
 
 ### Step 2: 리소스 모니터링 (Terminal 2)
