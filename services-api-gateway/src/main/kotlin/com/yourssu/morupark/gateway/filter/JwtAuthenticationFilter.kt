@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.cloud.gateway.filter.GatewayFilter
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpMethod.OPTIONS
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 
@@ -17,6 +18,10 @@ class JwtAuthenticationFilter(
 
     override fun apply(config: Any?): GatewayFilter {
         return GatewayFilter { exchange, chain ->
+            if (exchange.request.method == OPTIONS) {
+                return@GatewayFilter chain.filter(exchange)
+            }
+
             val authHeader = exchange.request.headers.getFirst(HttpHeaders.AUTHORIZATION)
 
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
