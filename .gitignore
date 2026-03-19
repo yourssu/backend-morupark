@@ -290,3 +290,6 @@ backup/
 # Executables and Python files
 *.exe
 *.py
+
+# gradle cache
+.gradle-cache
