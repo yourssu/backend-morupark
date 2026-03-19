@@ -23,7 +23,7 @@ spring:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
       group-id: goods-group
-      auto-offset-reset: earliest
+      auto-offset-reset: latest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
     producer:
@@ -33,3 +33,8 @@ spring:
       retries: 3
       properties:
         enable.idempotence: true
+
+kafka:
+  topic:
+    ticket-result:
+      partitions: ${KAFKA_TOPIC_TICKET_RESULT_PARTITIONS:3}
