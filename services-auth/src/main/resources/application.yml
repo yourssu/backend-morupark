@@ -21,6 +21,15 @@ security:
     secret: thisIsASecretKeyForJWTGenerationChangeMe
     access-token-expiration: 86400000 # 24 hours in milliseconds
 
+app:
+  server-url: ${APP_SERVER_URL:http://localhost:8000}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /auth-service/v3/api-docs
+
 logging:
   level:
     com.yourssu.morupark: DEBUG

@@ -42,6 +42,15 @@ management:
       exposure:
         include: health,info,metrics
 
+app:
+  server-url: ${APP_SERVER_URL:http://localhost:8000}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /queue-service/v3/api-docs
+
 logging:
   level:
     com.yourssu.morupark: DEBUG
