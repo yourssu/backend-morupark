@@ -50,7 +50,7 @@ spring:
         initializationFailTimeout: 0
         connectionTimeout: 30000
         validationTimeout: 5000
-        maximumPoolSize: 5
+        maximumPoolSize: 20
   
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
