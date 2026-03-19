@@ -256,6 +256,7 @@ application-*.properties
 # Local development
 local/
 *.local
+docker-compose.yml
 
 
 # 로컬 테라폼 작업 디렉토리 (플러그인 및 캐시)
@@ -289,6 +290,3 @@ backup/
 # Executables and Python files
 *.exe
 *.py
-
-# md files
-/md

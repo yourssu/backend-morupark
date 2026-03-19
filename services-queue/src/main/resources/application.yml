@@ -24,6 +24,7 @@ spring:
         enable.idempotence: true
     consumer:
       group-id: queue-service
+      auto-offset-reset: latest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
     listener:
@@ -42,6 +43,15 @@ management:
       exposure:
         include: health,info,metrics
 
+app:
+  server-url: ${APP_SERVER_URL:http://localhost:8000}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /queue-service/v3/api-docs
+
 logging:
   level:
     com.yourssu.morupark: DEBUG
@@ -49,6 +59,12 @@ logging:
 queue:
   max-size: ${QUEUE_MAX_SIZE:1}
   processing-interval: ${QUEUE_PROCESSING_INTERVAL:1000}
+
+kafka:
+  topic:
+    waiting:
+      partitions: ${KAFKA_TOPIC_WAITING_PARTITIONS:5}
+
 
 ---
 spring:

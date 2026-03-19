@@ -1,4 +1,4 @@
-package com.yourssu.morupark.sub.exception
+package com.yourssu.morupark.queue.sub.exception
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity

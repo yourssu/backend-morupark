@@ -4,7 +4,7 @@ import com.yourssu.morupark.queue.application.EnqueueResponse
 import com.yourssu.morupark.queue.application.TicketStatusResponse
 import com.yourssu.morupark.queue.implement.QueueAdapter
 import com.yourssu.morupark.queue.implement.WaitingTimeEstimator
-import com.yourssu.morupark.sub.exception.InvalidWaitingTokenException
+import com.yourssu.morupark.queue.sub.exception.InvalidWaitingTokenException
 import org.springframework.stereotype.Service
 import java.util.UUID
 
@@ -45,7 +45,7 @@ class QueueService(
             statusStr == TicketStatus.SUCCESS.name -> TicketStatusResponse(status = TicketStatus.SUCCESS)
             statusStr.startsWith("FAILED:") -> TicketStatusResponse(
                 status = TicketStatus.FAILED,
-                message = statusStr.removePrefix("FAILED:")
+                reason = FailureReason.valueOf(statusStr.removePrefix("FAILED:"))
             )
             else -> throw InvalidWaitingTokenException()
         }

@@ -1,3 +1,3 @@
-package com.yourssu.morupark.sub.exception
+package com.yourssu.morupark.queue.sub.exception
 
 class InvalidWaitingTokenException : RuntimeException()
