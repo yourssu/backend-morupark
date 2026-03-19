@@ -15,8 +15,8 @@ class TicketResultProducer(
         kafkaTemplate.send(TOPIC, waitingToken, "$waitingToken|SUCCESS")
     }
 
-    fun sendFailed(waitingToken: String, message: String) {
-        kafkaTemplate.send(TOPIC, waitingToken, "$waitingToken|FAILED:$message")
+    fun sendFailed(waitingToken: String, reason: String) {
+        kafkaTemplate.send(TOPIC, waitingToken, "$waitingToken|FAILED:$reason")
     }
 
     fun sendSoldOut() {

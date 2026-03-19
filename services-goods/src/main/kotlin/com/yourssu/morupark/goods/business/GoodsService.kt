@@ -26,7 +26,7 @@ class GoodsService(
     fun processTicket(waitingToken: String, studentId: String, phoneNumber: String) {
         if (!isWinner()) {
             log.info("[SERVICE] 낙첨 - token: $waitingToken")
-            eventPublisher.publishEvent(TicketFailedEvent(waitingToken, "당첨되지 않았습니다."))
+            eventPublisher.publishEvent(TicketFailedEvent(waitingToken, FailureReason.LOST))
             return
         }
 
@@ -38,7 +38,7 @@ class GoodsService(
             eventPublisher.publishEvent(TicketSuccessEvent(waitingToken))
         } else {
             log.warn("[SERVICE] 재고 없음 - token: $waitingToken")
-            eventPublisher.publishEvent(TicketFailedEvent(waitingToken, "재고 없음"))
+            eventPublisher.publishEvent(TicketFailedEvent(waitingToken, FailureReason.SOLD_OUT))
             val marked = goodsRepository.markSoldOut(GOODS_ID)
             if (marked > 0) {
                 log.warn("[SERVICE] SOLD_OUT 처리")

@@ -45,7 +45,7 @@ class QueueService(
             statusStr == TicketStatus.SUCCESS.name -> TicketStatusResponse(status = TicketStatus.SUCCESS)
             statusStr.startsWith("FAILED:") -> TicketStatusResponse(
                 status = TicketStatus.FAILED,
-                message = statusStr.removePrefix("FAILED:")
+                reason = FailureReason.valueOf(statusStr.removePrefix("FAILED:"))
             )
             else -> throw InvalidWaitingTokenException()
         }

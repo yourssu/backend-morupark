@@ -1,5 +1,6 @@
 package com.yourssu.morupark.queue.implement
 
+import com.yourssu.morupark.queue.business.FailureReason
 import com.yourssu.morupark.queue.business.TicketStatus
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaListener
@@ -30,7 +31,7 @@ class TicketResultConsumer(
             val remaining = queueAdapter.popAllFromWaitingQueue()
             log.warn("[CONSUMER] SOLD_OUT - 잔여 대기자 FAILED 처리: ${remaining?.size ?: 0}명")
             remaining?.forEach { token ->
-                queueAdapter.saveStatus(token, "${TicketStatus.FAILED.name}:재고 없음")
+                queueAdapter.saveStatus(token, "${TicketStatus.FAILED.name}:${FailureReason.SOLD_OUT.name}")
             }
             return
         }

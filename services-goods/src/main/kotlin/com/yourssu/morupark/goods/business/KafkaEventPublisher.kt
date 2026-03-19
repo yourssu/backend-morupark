@@ -17,7 +17,7 @@ class KafkaEventPublisher(
         log.info("[PUBLISHER] 이벤트 발행: ${event::class.simpleName}")
         when (event) {
             is TicketSuccessEvent -> ticketResultProducer.sendSuccess(event.waitingToken)
-            is TicketFailedEvent  -> ticketResultProducer.sendFailed(event.waitingToken, event.reason)
+            is TicketFailedEvent  -> ticketResultProducer.sendFailed(event.waitingToken, event.reason.name)
             is SoldOutEvent       -> ticketResultProducer.sendSoldOut()
         }
     }
