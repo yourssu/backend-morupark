@@ -5,7 +5,7 @@ import com.yourssu.morupark.queue.business.QueueService
 import com.yourssu.morupark.queue.business.TicketStatus
 import com.yourssu.morupark.queue.implement.QueueAdapter
 import com.yourssu.morupark.queue.implement.WaitingTimeEstimator
-import com.yourssu.morupark.sub.exception.InvalidWaitingTokenException
+import com.yourssu.morupark.queue.sub.exception.InvalidWaitingTokenException
 import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK

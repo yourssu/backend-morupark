@@ -31,10 +31,27 @@ spring:
             - Path=/api/queues/**
           filters:
             - JwtAuthenticationFilter
+        - id: auth-service-docs
+          uri: http://localhost:8081
+          predicates:
+            - Path=/auth-service/v3/api-docs
+        - id: queue-service-docs
+          uri: http://localhost:8082
+          predicates:
+            - Path=/queue-service/v3/api-docs
 
 security:
   jwt:
     secret: ${JWT_SECRET:thisIsASecretKeyForJWTGenerationChangeMe}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: auth-service
+        url: /auth-service/v3/api-docs
+      - name: queue-service
+        url: /queue-service/v3/api-docs
 
 logging:
   level:
@@ -58,6 +75,14 @@ spring:
             - Path=/api/queues/**
           filters:
             - JwtAuthenticationFilter
+        - id: auth-service-docs
+          uri: ${AUTH_SERVICE_URL}
+          predicates:
+            - Path=/auth-service/v3/api-docs
+        - id: queue-service-docs
+          uri: ${QUEUE_SERVICE_URL}
+          predicates:
+            - Path=/queue-service/v3/api-docs
 
 logging:
   level:

@@ -4,7 +4,7 @@ import com.yourssu.morupark.queue.application.EnqueueResponse
 import com.yourssu.morupark.queue.application.TicketStatusResponse
 import com.yourssu.morupark.queue.implement.QueueAdapter
 import com.yourssu.morupark.queue.implement.WaitingTimeEstimator
-import com.yourssu.morupark.sub.exception.InvalidWaitingTokenException
+import com.yourssu.morupark.queue.sub.exception.InvalidWaitingTokenException
 import org.springframework.stereotype.Service
 import java.util.UUID
 
