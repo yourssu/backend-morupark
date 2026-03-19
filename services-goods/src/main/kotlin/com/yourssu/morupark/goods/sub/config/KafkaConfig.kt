@@ -1,4 +1,4 @@
-package com.yourssu.morupark.queue.sub.config
+package com.yourssu.morupark.goods.sub.config
 
 import org.apache.kafka.clients.admin.NewTopic
 import org.springframework.beans.factory.annotation.Value
@@ -8,13 +8,13 @@ import org.springframework.kafka.config.TopicBuilder
 
 @Configuration
 class KafkaConfig(
-    @Value("\${kafka.topic.waiting.partitions}") private val waitingPartitions: Int,
+    @Value("\${kafka.topic.ticket-result.partitions}") private val ticketResultPartitions: Int,
 ) {
 
     @Bean
-    fun waitingTopic(): NewTopic {
-        return TopicBuilder.name("WAITING")
-            .partitions(waitingPartitions)
+    fun ticketResultTopic(): NewTopic {
+        return TopicBuilder.name("TICKET_RESULT")
+            .partitions(ticketResultPartitions)
             .build()
     }
 }
