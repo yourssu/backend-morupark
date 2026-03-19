@@ -33,6 +33,9 @@ dependencies {
     implementation("com.google.cloud:spring-cloud-gcp-starter:5.1.2")
     implementation("org.apache.kafka:kafka-clients")
 
+    // Swagger
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
+
     // JWT
     implementation("io.jsonwebtoken:jjwt-api:0.12.3")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.3")
