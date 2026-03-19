@@ -4,7 +4,7 @@ metadata:
   name: queue-service
   namespace: morupark-prod
 spec:
-  replicas: 5
+  replicas: 2
   selector:
     matchLabels:
       app.kubernetes.io/name: queue-service

@@ -4,5 +4,5 @@ metadata:
   name: goods-service-hpa
   namespace: morupark-prod
 spec:
-  minReplicas: 5
+  minReplicas: 2
   maxReplicas: 30

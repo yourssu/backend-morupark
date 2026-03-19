@@ -4,7 +4,7 @@ metadata:
   name: queue-service-hpa
   namespace: morupark-prod
 spec:
-  minReplicas: 5
+  minReplicas: 2
   maxReplicas: 20
   metrics:
   - type: Resource

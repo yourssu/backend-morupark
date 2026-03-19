@@ -4,7 +4,7 @@ metadata:
   name: auth-service-hpa
   namespace: morupark-prod
 spec:
-  minReplicas: 3
+  minReplicas: 2
   maxReplicas: 10
   metrics:
   - type: Resource
