@@ -87,11 +87,11 @@ spring:
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
     properties:
-      # security.protocol: PLAINTEXT
-      security.protocol: SASL_SSL
-      sasl.mechanism: OAUTHBEARER
-      sasl.jaas.config: org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required;
-      sasl.login.callback.handler.class: com.google.cloud.hosted.kafka.auth.GcpLoginCallbackHandler
+      security.protocol: PLAINTEXT
+      # security.protocol: SASL_SSL
+      # sasl.mechanism: OAUTHBEARER
+      # sasl.jaas.config: org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required;
+      # sasl.login.callback.handler.class: com.google.cloud.hosted.kafka.auth.GcpLoginCallbackHandler
 
   jpa:
     hibernate:
