@@ -29,7 +29,7 @@ spec:
 
       containers:
         - name: auth-service
-          image: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/auth-service:dev-2
+          image: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/auth-service:latest
           imagePullPolicy: Always
           ports:
             - name: http
