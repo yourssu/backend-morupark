@@ -1,0 +1,8 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: morupark-managed-cert-prod
+  namespace: morupark-prod
+spec:
+  domains:
+    - api.morupark.urssu.com

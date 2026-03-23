@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: auth-service-sa-prod
+  namespace: morupark-prod
+  annotations:
+    iam.gke.io/gcp-service-account: auth-service-sa-prod@yourssu-morupark.iam.gserviceaccount.com
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: queue-service-sa-prod
+  namespace: morupark-prod
+  annotations:
+    iam.gke.io/gcp-service-account: queue-service-sa-prod@yourssu-morupark.iam.gserviceaccount.com

@@ -86,6 +86,9 @@ spring:
           predicates:
             - Path=/queue-service/v3/api-docs
 
+security:
+  jwt:
+    secret: ${JWT_SECRET}
 logging:
   level:
     com.yourssu.morupark: INFO

@@ -1,0 +1,29 @@
+  apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    name: morupark-prod-ingress-v2
+    namespace: morupark-prod
+    labels:
+      app.kubernetes.io/name: morupark-prod-ingress
+      app.kubernetes.io/part-of: morupark-msa
+      environment: production
+    annotations:
+      # 1. GKE 컨트롤러를 확실하게 트리거하는 어노테이션 (필수 유지)
+      kubernetes.io/ingress.class: "gce"
+      # 2. 테라폼이 만들어줄 고정 IP의 '이름'과 정확히 일치시켜야 함
+      kubernetes.io/ingress.global-static-ip-name: "morupark-static-ip-prod-v2"
+      # 3. 인증서 연결 설정
+      networking.gke.io/managed-certificates: "morupark-managed-cert-prod"
+  spec:
+    ingressClassName: "gce"
+    rules:
+    - host: api.morupark.urssu.com
+      http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: api-gateway
+              port:
+                number: 80
