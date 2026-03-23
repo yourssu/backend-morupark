@@ -1,0 +1,64 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: morupark-prod
+
+namespace: morupark-prod
+
+resources:
+  - ../../base
+  - ../../components/auth-service
+  - ../../components/queue-service
+  - ../../components/api-gateway
+  - ../../components/goods-service
+  - ../../components/redis
+  - ../../components/kafka
+  - ingress.yaml
+
+patches:
+  - path: configmap-patch.yaml
+    target:
+      kind: ConfigMap
+      name: morupark-config
+  - path: auth-service-patch.yaml
+    target:
+      kind: Deployment
+      name: auth-service
+  - path: queue-service-patch.yaml
+    target:
+      kind: Deployment
+      name: queue-service
+  - path: auth-hpa-patch.yaml
+    target:
+      kind: HorizontalPodAutoscaler
+      name: auth-service-hpa
+  - path: queue-hpa-patch.yaml
+    target:
+      kind: HorizontalPodAutoscaler
+      name: queue-service-hpa
+  - path: sa-patch.yaml
+  - path: sql-config-patch.yaml
+  - path: goods-service-patch.yaml
+    target:
+      kind: Deployment
+      name: goods-service
+  - path: goods-hpa-patch.yaml
+    target:
+      kind: HorizontalPodAutoscaler
+      name: goods-service-hpa
+
+labels:
+  - pairs:
+      environment: production
+      app.kubernetes.io/instance: morupark-prod
+
+images:
+  - name: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/auth-service
+    newTag: latest
+  - name: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/queue-service
+    newTag: latest
+  - name: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/api-gateway
+    newTag: latest
+  - name: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/goods-service
+    newTag: latest

@@ -5,6 +5,20 @@ plugins {
     kotlin("plugin.spring") version "2.2.0"
     id("org.springframework.boot") version "3.4.1"
     id("io.spring.dependency-management") version "1.1.7"
+    id("com.google.cloud.tools.jib") version "3.4.4"
+}
+
+jib {
+    from {
+        image = "eclipse-temurin:21-jre"
+    }
+    to {
+        image = "asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/api-gateway:latest"
+    }
+    container {
+        mainClass = "com.yourssu.morupark.gateway.GatewayApplicationKt"
+        ports = listOf("8000")
+    }
 }
 
 group = "com.yourssu.morupark"
@@ -20,6 +34,7 @@ java {
 
 repositories {
     mavenCentral()
+    google()
 }
 
 dependencyManagement {
@@ -31,6 +46,7 @@ dependencyManagement {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.cloud:spring-cloud-starter-gateway")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")

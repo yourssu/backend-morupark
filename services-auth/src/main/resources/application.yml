@@ -18,7 +18,7 @@ management:
 
 security:
   jwt:
-    secret: thisIsASecretKeyForJWTGenerationChangeMe
+    secret: ${JWT_SECRET:thisIsASecretKeyForJWTGenerationChangeMe}  
     access-token-expiration: 86400000 # 24 hours in milliseconds
 
 app:
@@ -50,7 +50,7 @@ spring:
         initializationFailTimeout: 0
         connectionTimeout: 30000
         validationTimeout: 5000
-        maximumPoolSize: 5
+        maximumPoolSize: 20
   
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
@@ -62,8 +62,12 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     show-sql: false
+
+security:
+  jwt:
+    secret: ${JWT_SECRET}
 
 logging:
   level:

@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: morupark-prod
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - morupark-sql-config.yaml
+  - secret-store.yaml
+  - external-secret.yaml
+  - managed-cert.yaml
