@@ -11,6 +11,8 @@ spring:
           '[/**]':
             allowedOrigins:
               - "http://localhost:5173"
+              - "https://morupark.urssu.com"
+              - "https://frontend-morupark.pages.dev"
             allowedMethods:
               - GET
               - POST
