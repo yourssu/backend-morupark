@@ -19,7 +19,7 @@ class GoodsService(
 
     companion object {
         private const val GOODS_ID = 1L
-        private const val WIN_PROBABILITY = 0.90f
+        private const val WIN_PROBABILITY = 0.50f
     }
 
     @Transactional
