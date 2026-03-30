@@ -49,40 +49,21 @@ metadata:
     argocd-image-updater.argoproj.io/queue.update-strategy: digest
     argocd-image-updater.argoproj.io/api.update-strategy: digest
     argocd-image-updater.argoproj.io/goods.update-strategy: digest
-    argocd-image-updater.argoproj.io/auth.allow-tags: regexp:^v[0-9].*|^prod-.*
-    argocd-image-updater.argoproj.io/queue.allow-tags: regexp:^v[0-9].*|^prod-.*
-    argocd-image-updater.argoproj.io/api.allow-tags: regexp:^v[0-9].*|^prod-.*
-    argocd-image-updater.argoproj.io/goods.allow-tags: regexp:^v[0-9].*|^prod-.*
+    argocd-image-updater.argoproj.io/auth.allow-tags: regexp:^v[0-9].*|^prod-.*|^sha-.*
+    argocd-image-updater.argoproj.io/queue.allow-tags: regexp:^v[0-9].*|^prod-.*|^sha-.*
+    argocd-image-updater.argoproj.io/api.allow-tags: regexp:^v[0-9].*|^prod-.*|^sha-.*
+    argocd-image-updater.argoproj.io/goods.allow-tags: regexp:^v[0-9].*|^prod-.*|^sha-.*
 ```
 
 주의:
-- `allow-tags`는 팀 태그 규칙에 맞게 조정한다.
+- `allow-tags`는 팀 태그 규칙(`sha-.*`)에 맞게 조정한다.
 - digest 전략을 쓰더라도 소스 태그 선택 기준은 필요하다.
 
 ### 3) GitHub Actions 빌드/푸시 정책
 - 태그는 고유하고 immutable하게 발급한다.
-  - 예: `prod-${{ github.run_number }}-${{ github.sha }}`
+  - 예: `sha-${{ github.sha }}`
 - `latest` push는 운영 자동배포 트리거로 사용하지 않는다(선택적으로만 유지).
 - 워크플로우는 서비스별 병렬 빌드 가능.
-
-간단 예시:
-```yaml
-name: build-and-push
-on:
-  push:
-    branches: [ "main" ]
-jobs:
-  build-auth:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build and Push
-        run: |
-          IMAGE=asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/auth-service
-          TAG=prod-${GITHUB_RUN_NUMBER}-${GITHUB_SHA}
-          docker build -t ${IMAGE}:${TAG} services-auth
-          docker push ${IMAGE}:${TAG}
-```
 
 ## 운영 적용 순서
 1. Argo CD Image Updater에 Git push 권한/레지스트리 조회 권한 설정
@@ -91,18 +72,52 @@ jobs:
 4. 테스트용 소규모 서비스 1개부터 자동 업데이트 검증
 5. 전체 서비스로 확대
 
-## 검증 체크리스트
-- 새 이미지 push 후 1~5분 내 Git에 이미지 업데이트 커밋 생성
-- Argo CD Application `OutOfSync -> Synced` 자동 전환
-- `kubectl get deploy -n morupark-prod -o jsonpath=...`에서 이미지 반영 확인
-- `kubectl get pods -n morupark-prod -o jsonpath=...`의 `imageID`가 기대 digest와 일치
+---
 
-## 롤백 전략
-- Git revert로 이전 이미지 digest/태그로 즉시 복구
-- Argo CD 자동 sync로 클러스터가 이전 버전으로 복원
-- 장애 시 Image Updater 일시 중지(annotations 제거 또는 updater deployment scale down)
+# 🚀 GKE 클러스터 복구 및 CI/CD 파이프라인 활성화 가이드
 
-## 보안/안정성 권고
-- Image Updater 계정 권한 최소화(읽기/필요 최소 push 권한)
-- 프로덕션은 protected branch + required review 정책 유지
-- 다중 서비스 동시 업데이트 시 파동 배포(서비스별 순차 반영) 고려
+클러스터가 삭제된 후 다시 생성(Re-creation)되었을 때, CI/CD를 정상화하기 위한 실행 순서입니다.
+
+## 1. 인프라 기초 복구 (GKE 가동 직후)
+- **네임스페이스 및 기본 리소스 배포**:
+  ```bash
+  kubectl apply -k k8s/overlays/prod
+  ```
+- **시크릿 동기화 확인**: External Secrets Operator가 정상 작동하여 `morupark-gcp-secrets`가 생성되었는지 확인합니다.
+  ```bash
+  kubectl get secret morupark-gcp-secrets -n morupark-prod
+  ```
+
+## 2. Argo CD 설치 및 설정
+- **Argo CD 엔진 설치**:
+  ```bash
+  kubectl create namespace argocd
+  kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+  ```
+- **Argo CD Image Updater 설치**:
+  ```bash
+  kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj-labs/argocd-image-updater/stable/manifests/install.yaml
+  ```
+
+## 3. 자격 증명(Credentials) 연동
+Argo CD가 외부 시스템과 통신하기 위해 다음 두 가지가 반드시 필요합니다.
+
+### A. GitHub 접근 권한 (Write-back용)
+Argo CD가 `main` 브랜치에 `kustomization.yaml`을 수정해서 커밋하려면 권한이 필요합니다.
+1. GitHub에서 **Personal Access Token (PAT)** 생성 (권한: `repo` 전체).
+2. Argo CD Settings -> Repositories에 해당 레포지토리와 PAT를 등록합니다.
+
+### B. GCP Artifact Registry 접근 권한 (Image 감지용)
+Image Updater가 비공개 GCP 리포지토리의 태그 목록을 읽어야 합니다.
+- **추천 방식**: GKE Workload Identity를 사용하여 `argocd-image-updater` KSA와 GCP GSA를 연결합니다.
+- **임시 방식**: GCP 서비스 계정 키(JSON)를 K8s Secret으로 생성하여 Image Updater 파드에 마운트합니다.
+
+## 4. Argo CD Application 배포
+Argo CD에게 무엇을 동기화할지 명령합니다. (어노테이션 포함)
+- `k8s/overlays/prod` 경로를 바라보는 `Application` 리소스를 생성하고, 상단 **[2) Argo CD Application annotation]**에 기재된 어노테이션을 모두 적용합니다.
+
+## 5. 파이프라인 테스트 (검증)
+1. 로컬에서 코드 수정 후 `git commit -m "ci test" && git push origin main` 실행.
+2. GitHub Actions 탭에서 빌드/푸시 성공 확인.
+3. 1~5분 후 GitHub 레포지토리의 `k8s/overlays/prod/kustomization.yaml` 파일에 Argo CD에 의해 자동으로 커밋이 생성되었는지 확인.
+4. Argo CD UI에서 `OutOfSync` -> `Synced`로 바뀌며 파드가 롤링 업데이트되는지 확인.
