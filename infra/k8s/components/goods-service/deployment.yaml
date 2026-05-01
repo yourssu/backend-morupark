@@ -1,4 +1,4 @@
-apiVersion: apps/v1
+﻿apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: goods-service
@@ -28,7 +28,7 @@ spec:
         fsGroup: 1001
       containers:
         - name: goods-service
-          image: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/goods-service:latest
+          image: asia-northeast3-docker.pkg.dev/yourssu-morupark-494902/morupark-repo-private/goods-service:latest
           imagePullPolicy: Always
           ports:
             - name: http
@@ -108,3 +108,4 @@ spec:
             limits:
               memory: "256Mi"
               cpu: "200m"
+

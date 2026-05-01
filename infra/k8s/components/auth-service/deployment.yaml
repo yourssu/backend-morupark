@@ -1,4 +1,4 @@
-apiVersion: apps/v1
+﻿apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: auth-service
@@ -29,7 +29,7 @@ spec:
 
       containers:
         - name: auth-service
-          image: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/auth-service:latest
+          image: asia-northeast3-docker.pkg.dev/yourssu-morupark-494902/morupark-repo-private/auth-service:latest
           imagePullPolicy: Always
           ports:
             - name: http
@@ -115,3 +115,4 @@ spec:
             requests:
               memory: "128Mi"
               cpu: "50m"
+

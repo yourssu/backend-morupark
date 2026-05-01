@@ -1,4 +1,4 @@
-apiVersion: apps/v1
+﻿apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: queue-service
@@ -29,7 +29,7 @@ spec:
 
       containers:
         - name: queue-service
-          image: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/queue-service:dev-2
+          image: asia-northeast3-docker.pkg.dev/yourssu-morupark-494902/morupark-repo-private/queue-service:dev-2
           imagePullPolicy: Always
           ports:
             - name: http
@@ -121,7 +121,7 @@ spec:
         - name: cloud-sql-proxy
           image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0
           args:
-#            - "--private-ip" # cloud sql을 public으로 수정
+#            - "--private-ip" # cloud sql??public?쇰줈 ?섏젙
             - "--structured-logs"
             - "--port=3306"
             - "$(SQL_INSTANCE_CONNECTION_NAME)"
@@ -137,3 +137,4 @@ spec:
             requests:
               memory: "128Mi"
               cpu: "50m"
+

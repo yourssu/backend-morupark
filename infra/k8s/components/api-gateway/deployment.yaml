@@ -1,4 +1,4 @@
-apiVersion: apps/v1
+﻿apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: api-gateway
@@ -19,7 +19,7 @@ spec:
       serviceAccountName: api-gateway-sa-prod
       containers:
         - name: api-gateway
-          image: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/api-gateway:latest
+          image: asia-northeast3-docker.pkg.dev/yourssu-morupark-494902/morupark-repo-private/api-gateway:latest
           ports:
             - containerPort: 8080
           env:
@@ -53,3 +53,4 @@ spec:
               port: 8080
             initialDelaySeconds: 20
             periodSeconds: 10
+
