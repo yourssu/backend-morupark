@@ -1,0 +1,305 @@
+{
+  "skill": {
+    "name": "k8s-release-verification",
+    "kind": "repo-local-skill",
+    "sidecar_format": "ssl-v1",
+    "human_document": "SKILL.md"
+  },
+  "scheduling": {
+    "goal": "Provide a repeatable verification and troubleshooting flow for Kubernetes releases in this repository, from overlay checks through rollout failure classification.",
+    "trigger_phrases": [
+      "verify k8s deploy",
+      "check rollout status",
+      "imagepullbackoff in prod",
+      "post deploy verification",
+      "kubectl apply check",
+      "k8s resource deploy confirmation"
+    ],
+    "intent_signatures": [
+      "pre-apply-k8s-review",
+      "post-deploy-verification",
+      "classify-rollout-failure",
+      "verify-overlay-consistency"
+    ],
+    "expected_inputs": [
+      "target environment such as dev or prod",
+      "overlay path or namespace",
+      "recent apply or rollout symptoms"
+    ],
+    "expected_outputs": [
+      "verification summary",
+      "failure classification",
+      "safe next action",
+      "operator handoff notes"
+    ],
+    "tags": [
+      "kubernetes",
+      "kustomize",
+      "rollout",
+      "verification",
+      "gke"
+    ],
+    "dependencies": [
+      ".gemini/hooks/pre-apply.sh",
+      ".gemini/hooks/post-deploy.sh",
+      ".gemini/skills/k8s-release-ops.md",
+      ".gemini/skills/redis-ops.md",
+      ".gemini/md/problem-solving.md",
+      ".gemini/deploy-dev.ps1",
+      "infra/k8s/overlays/dev",
+      "infra/k8s/overlays/prod"
+    ],
+    "control_signals": {
+      "has_branching": true,
+      "has_loops": false,
+      "uses_tool_calls": true,
+      "requires_human_approval_for_mutation": true
+    },
+    "mutation_profile": {
+      "can_read_repo_files": true,
+      "can_execute_validation_commands": true,
+      "can_mutate_repo_files": false,
+      "can_mutate_cloud_state": true
+    },
+    "sensitive_resource_flags": [
+      "prod-overlay",
+      "namespace-selection",
+      "image-tag-drift",
+      "secret-dependent-workloads",
+      "statefulset-rollout"
+    ]
+  },
+  "structural": {
+    "entry_scene": "classify-release-task",
+    "scenes": [
+      {
+        "id": "classify-release-task",
+        "purpose": "Determine whether the task is pre-apply review, post-deploy verification, or rollout failure diagnosis.",
+        "inputs": [
+          "user request",
+          "target environment"
+        ],
+        "outputs": [
+          "release task mode",
+          "overlay target"
+        ],
+        "entry_conditions": [
+          "request touches Kubernetes release state"
+        ],
+        "exit_conditions": [
+          "verification mode selected"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "overlay or namespace needs review",
+            "goto": "review-overlay-context"
+          }
+        ]
+      },
+      {
+        "id": "review-overlay-context",
+        "purpose": "Confirm overlay path, namespace, and resource-kind expectations.",
+        "inputs": [
+          "release task mode"
+        ],
+        "outputs": [
+          "overlay consistency facts"
+        ],
+        "entry_conditions": [
+          "Kubernetes release verification is requested"
+        ],
+        "exit_conditions": [
+          "context consistency understood"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "context is valid",
+            "goto": "run-verification"
+          },
+          {
+            "when": "context is inconsistent",
+            "goto": "recovery"
+          }
+        ]
+      },
+      {
+        "id": "run-verification",
+        "purpose": "Run standard post-deploy checks and collect rollout signals.",
+        "inputs": [
+          "overlay consistency facts"
+        ],
+        "outputs": [
+          "raw rollout state"
+        ],
+        "entry_conditions": [
+          "target context is known"
+        ],
+        "exit_conditions": [
+          "workload state collected"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "workloads are healthy",
+            "goto": "done"
+          },
+          {
+            "when": "workloads are unhealthy",
+            "goto": "classify-failure"
+          }
+        ]
+      },
+      {
+        "id": "classify-failure",
+        "purpose": "Map rollout symptoms to recurring repo-specific failure classes.",
+        "inputs": [
+          "raw rollout state"
+        ],
+        "outputs": [
+          "failure classification",
+          "next owner or next step"
+        ],
+        "entry_conditions": [
+          "rollout has warnings or unhealthy workloads"
+        ],
+        "exit_conditions": [
+          "failure class identified"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "classification complete",
+            "goto": "done"
+          }
+        ]
+      },
+      {
+        "id": "recovery",
+        "purpose": "Stop unsafe rollout work and provide the smallest correction.",
+        "inputs": [
+          "context mismatch"
+        ],
+        "outputs": [
+          "blocked status",
+          "correction advice"
+        ],
+        "entry_conditions": [
+          "overlay or namespace validation failed"
+        ],
+        "exit_conditions": [
+          "user can resume safely"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "always",
+            "goto": "done"
+          }
+        ]
+      }
+    ]
+  },
+  "logical": {
+    "entry_step": "read-k8s-release-ops",
+    "steps": [
+      {
+        "id": "read-k8s-release-ops",
+        "scene_id": "review-overlay-context",
+        "act_type": "READ",
+        "resource_scope": "repo-file",
+        "resource_target": ".gemini/skills/k8s-release-ops.md",
+        "success_next": "read-pre-apply-guardrails",
+        "failure_next": "done"
+      },
+      {
+        "id": "read-pre-apply-guardrails",
+        "scene_id": "review-overlay-context",
+        "act_type": "READ",
+        "resource_scope": "repo-file",
+        "resource_target": ".gemini/hooks/pre-apply.sh",
+        "success_next": "read-post-deploy-hook",
+        "failure_next": "read-post-deploy-hook"
+      },
+      {
+        "id": "read-post-deploy-hook",
+        "scene_id": "run-verification",
+        "act_type": "READ",
+        "resource_scope": "repo-file",
+        "resource_target": ".gemini/hooks/post-deploy.sh",
+        "success_next": "validate-overlay-context",
+        "failure_next": "validate-overlay-context"
+      },
+      {
+        "id": "validate-overlay-context",
+        "scene_id": "review-overlay-context",
+        "act_type": "VALIDATE",
+        "resource_scope": "overlay-and-namespace",
+        "resource_target": "infra/k8s/overlays/dev|prod, namespace selection, approved mutation path",
+        "success_next": "execute-post-deploy-checks",
+        "failure_next": "report-context-mismatch"
+      },
+      {
+        "id": "execute-post-deploy-checks",
+        "scene_id": "run-verification",
+        "act_type": "EXECUTE",
+        "resource_scope": "repo-hook",
+        "resource_target": ".gemini/hooks/post-deploy.sh <namespace>",
+        "success_next": "classify-rollout-signals",
+        "failure_next": "classify-rollout-signals"
+      },
+      {
+        "id": "classify-rollout-signals",
+        "scene_id": "classify-failure",
+        "act_type": "INFER",
+        "resource_scope": "rollout-failure-shape",
+        "resource_target": "secret sync, image pull, probe, config, HPA, or StatefulSet-specific failure class",
+        "success_next": "read-redis-ops-if-needed",
+        "failure_next": "done"
+      },
+      {
+        "id": "read-redis-ops-if-needed",
+        "scene_id": "classify-failure",
+        "act_type": "READ",
+        "resource_scope": "repo-file",
+        "resource_target": ".gemini/skills/redis-ops.md",
+        "success_next": "emit-next-step",
+        "failure_next": "emit-next-step"
+      },
+      {
+        "id": "emit-next-step",
+        "scene_id": "classify-failure",
+        "act_type": "WRITE",
+        "resource_scope": "operator-guidance",
+        "resource_target": "repo-specific next safe action or owner handoff",
+        "success_next": "done",
+        "failure_next": "done"
+      }
+    ]
+  },
+  "grounding": {
+    "policy": "Ground release verification in repo hooks, overlay notes, and recorded failure patterns. Do not generalize away repo-specific details like namespace, image tags, and Redis StatefulSet behavior.",
+    "sources": [
+      {
+        "path": ".gemini/hooks/pre-apply.sh",
+        "evidence": "Namespace, overlay, and Terraform mutation guardrails."
+      },
+      {
+        "path": ".gemini/hooks/post-deploy.sh",
+        "evidence": "Standard post-deploy verification commands."
+      },
+      {
+        "path": ".gemini/skills/k8s-release-ops.md",
+        "evidence": "Overlay paths and release checklist."
+      },
+      {
+        "path": ".gemini/skills/redis-ops.md",
+        "evidence": "Redis is StatefulSet-based and needs different expectations than Deployment resources."
+      },
+      {
+        "path": ".gemini/md/problem-solving.md",
+        "evidence": "Recurring rollout failures including image, secret, probe, and config problems."
+      },
+      {
+        "path": ".gemini/deploy-dev.ps1",
+        "evidence": "Image tagging, push, and restart patterns relevant to rollout verification."
+      }
+    ]
+  }
+}
