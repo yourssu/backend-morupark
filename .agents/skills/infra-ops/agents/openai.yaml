@@ -1,0 +1,4 @@
+interface:
+  display_name: "인프라 운영"
+  short_description: "Terraform 및 인프라 운영 작업을 위한 스킬"
+  default_prompt: "$infra-ops를 사용해 저장소 로컬 인프라 워크플로를 안전하게 점검하거나 실행합니다."
