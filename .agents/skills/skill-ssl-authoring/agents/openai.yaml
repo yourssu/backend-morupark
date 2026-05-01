@@ -1,0 +1,4 @@
+interface:
+  display_name: "스킬 SSL 작성"
+  short_description: "사이드카 SSL 그래프를 포함한 스킬을 작성하는 스킬"
+  default_prompt: "$skill-ssl-authoring를 사용해 SKILL.md와 ssl.json으로 구성된 저장소 로컬 스킬을 생성하거나 수정합니다."

@@ -1,0 +1,67 @@
+{
+  "skill": {
+    "name": "replace-me",
+    "kind": "repo-local-skill",
+    "sidecar_format": "ssl-v1",
+    "human_document": "SKILL.md"
+  },
+  "scheduling": {
+    "goal": "Replace with the main goal of the skill.",
+    "trigger_phrases": [],
+    "intent_signatures": [],
+    "expected_inputs": [],
+    "expected_outputs": [],
+    "tags": [],
+    "dependencies": [],
+    "control_signals": {
+      "has_branching": true,
+      "has_loops": false,
+      "uses_tool_calls": true,
+      "requires_human_approval_for_mutation": false
+    },
+    "mutation_profile": {
+      "can_read_repo_files": true,
+      "can_execute_validation_commands": true,
+      "can_mutate_repo_files": false,
+      "can_mutate_cloud_state": false
+    },
+    "sensitive_resource_flags": []
+  },
+  "structural": {
+    "entry_scene": "replace-entry-scene",
+    "scenes": [
+      {
+        "id": "replace-entry-scene",
+        "purpose": "Replace with the first scene purpose.",
+        "inputs": [],
+        "outputs": [],
+        "entry_conditions": [],
+        "exit_conditions": [],
+        "next_scene_rules": [
+          {
+            "when": "replace-me",
+            "goto": "done"
+          }
+        ]
+      }
+    ]
+  },
+  "logical": {
+    "entry_step": "replace-entry-step",
+    "steps": [
+      {
+        "id": "replace-entry-step",
+        "scene_id": "replace-entry-scene",
+        "act_type": "READ",
+        "resource_scope": "replace-scope",
+        "resource_target": "replace-target",
+        "success_next": "done",
+        "failure_next": "done"
+      }
+    ]
+  },
+  "grounding": {
+    "policy": "Ground every field in source evidence.",
+    "sources": []
+  }
+}
