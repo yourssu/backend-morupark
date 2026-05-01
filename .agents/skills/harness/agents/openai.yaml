@@ -1,0 +1,4 @@
+interface:
+  display_name: "운영 하네스"
+  short_description: "운영 요청에 맞는 인프라·K8s 스킬로 연결해 주는 메타 스킬"
+  default_prompt: "$harness를 사용해 현재 요청이 ESO 재발 방지, 재프로비저닝 인계, K8s 배포 검증, 일반 인프라 작업 중 어디에 해당하는지 분류하고 올바른 순서로 진행합니다."
