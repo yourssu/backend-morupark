@@ -1,0 +1,4 @@
+interface:
+  display_name: "ESO 재발 방지 운영"
+  short_description: "ESO, CRD, Secret 동기화 장애를 점검하고 재발을 막는 운영 스킬"
+  default_prompt: "$eso-recurrence-prevention를 사용해 ESO 설치 상태, CRD 존재 여부, Secret 동기화, 배포 순서를 점검하고 같은 장애가 반복되지 않도록 복구 및 예방 절차를 진행합니다."

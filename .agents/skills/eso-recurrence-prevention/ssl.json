@@ -1,0 +1,380 @@
+{
+  "skill": {
+    "name": "eso-recurrence-prevention",
+    "kind": "repo-local-skill",
+    "sidecar_format": "ssl-v1",
+    "human_document": "SKILL.md"
+  },
+  "scheduling": {
+    "goal": "Prevent repeated External Secrets Operator incidents by enforcing bootstrap order, validating CRDs and ESO health, and verifying secret synchronization before workload rollout.",
+    "trigger_phrases": [
+      "eso issue",
+      "externalsecret not working",
+      "secretstore missing",
+      "prevent eso recurrence",
+      "morupark-gcp-secrets missing",
+      "crd missing after cluster rebuild"
+    ],
+    "intent_signatures": [
+      "diagnose-eso-bootstrap-failure",
+      "recover-eso-after-cluster-rebuild",
+      "verify-secret-sync-readiness",
+      "prevent-repeated-eso-incidents"
+    ],
+    "expected_inputs": [
+      "user request describing secret sync or deploy failure",
+      "target cluster or environment such as prod",
+      "current kubeconfig state when cluster access is relevant"
+    ],
+    "expected_outputs": [
+      "root cause summary",
+      "safe recovery order",
+      "eso verification findings",
+      "prevention checklist or execution result"
+    ],
+    "tags": [
+      "eso",
+      "external-secrets",
+      "secret-manager",
+      "kubernetes",
+      "gke",
+      "production"
+    ],
+    "dependencies": [
+      ".gemini/md/eso.md",
+      ".gemini/md/restart-guide.md",
+      ".gemini/hooks/pre-apply.sh",
+      "infra/k8s/overlays/prod",
+      "infra/terraform/environments/prod/secret_manager.tf",
+      "infra/terraform/environments/prod/iam.tf"
+    ],
+    "control_signals": {
+      "has_branching": true,
+      "has_loops": false,
+      "uses_tool_calls": true,
+      "requires_human_approval_for_mutation": true
+    },
+    "mutation_profile": {
+      "can_read_repo_files": true,
+      "can_execute_validation_commands": true,
+      "can_mutate_repo_files": false,
+      "can_mutate_cloud_state": true
+    },
+    "sensitive_resource_flags": [
+      "kubeconfig-context",
+      "external-secrets-crds",
+      "secret-manager-access",
+      "workload-identity-binding",
+      "production-secret-sync"
+    ]
+  },
+  "structural": {
+    "entry_scene": "detect-failure-shape",
+    "scenes": [
+      {
+        "id": "detect-failure-shape",
+        "purpose": "Classify whether the issue is CRD absence, ESO absence, sync failure, or downstream workload breakage.",
+        "inputs": [
+          "user request",
+          "recent symptoms"
+        ],
+        "outputs": [
+          "failure classification",
+          "target namespace"
+        ],
+        "entry_conditions": [
+          "request mentions ESO, ExternalSecret, SecretStore, or missing synced secret"
+        ],
+        "exit_conditions": [
+          "failure shape identified"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "cluster access matters",
+            "goto": "validate-cluster-context"
+          }
+        ]
+      },
+      {
+        "id": "validate-cluster-context",
+        "purpose": "Confirm the Kubernetes context and inspect ESO prerequisites.",
+        "inputs": [
+          "failure classification"
+        ],
+        "outputs": [
+          "cluster context state",
+          "prerequisite status"
+        ],
+        "entry_conditions": [
+          "kubernetes inspection is needed"
+        ],
+        "exit_conditions": [
+          "cluster target and prerequisites understood"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "eso or crd prerequisites are missing",
+            "goto": "recover-eso"
+          },
+          {
+            "when": "prerequisites exist",
+            "goto": "verify-sync"
+          }
+        ]
+      },
+      {
+        "id": "recover-eso",
+        "purpose": "Restore ESO installation and CRDs in the repo-standard order.",
+        "inputs": [
+          "prerequisite status",
+          "user approval state"
+        ],
+        "outputs": [
+          "eso install result",
+          "crd readiness state"
+        ],
+        "entry_conditions": [
+          "ESO or CRDs are missing and recovery is requested"
+        ],
+        "exit_conditions": [
+          "ESO recovery completed or blocked"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "recovery succeeds",
+            "goto": "reapply-overlay"
+          },
+          {
+            "when": "recovery fails or cannot proceed",
+            "goto": "recovery"
+          }
+        ]
+      },
+      {
+        "id": "reapply-overlay",
+        "purpose": "Re-apply the prod overlay only after ESO readiness is confirmed.",
+        "inputs": [
+          "crd readiness state"
+        ],
+        "outputs": [
+          "overlay apply result"
+        ],
+        "entry_conditions": [
+          "ESO CRDs and controller are ready"
+        ],
+        "exit_conditions": [
+          "overlay applied or deferred"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "overlay step completed",
+            "goto": "verify-sync"
+          }
+        ]
+      },
+      {
+        "id": "verify-sync",
+        "purpose": "Verify ExternalSecret readiness, synced Secret presence, and dependent workloads.",
+        "inputs": [
+          "overlay state",
+          "namespace"
+        ],
+        "outputs": [
+          "verification summary",
+          "remaining issue classification"
+        ],
+        "entry_conditions": [
+          "ESO prerequisites are ready or overlay was re-applied"
+        ],
+        "exit_conditions": [
+          "secret sync and downstream health assessed"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "issue resolved",
+            "goto": "prevention"
+          },
+          {
+            "when": "follow-up failure remains",
+            "goto": "recovery"
+          }
+        ]
+      },
+      {
+        "id": "prevention",
+        "purpose": "Document and enforce the smallest repeat-prevention gate.",
+        "inputs": [
+          "verification summary"
+        ],
+        "outputs": [
+          "prevention checklist",
+          "next safe standard order"
+        ],
+        "entry_conditions": [
+          "root cause and current state are known"
+        ],
+        "exit_conditions": [
+          "recurrence prevention advice ready"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "always",
+            "goto": "done"
+          }
+        ]
+      },
+      {
+        "id": "recovery",
+        "purpose": "Stop unsafe execution and surface the next safe action.",
+        "inputs": [
+          "failure reason"
+        ],
+        "outputs": [
+          "blocked status",
+          "next safe step"
+        ],
+        "entry_conditions": [
+          "required check fails or mutation cannot proceed safely"
+        ],
+        "exit_conditions": [
+          "user can resume safely"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "always",
+            "goto": "done"
+          }
+        ]
+      }
+    ]
+  },
+  "logical": {
+    "entry_step": "read-eso-guide",
+    "steps": [
+      {
+        "id": "read-eso-guide",
+        "scene_id": "detect-failure-shape",
+        "act_type": "READ",
+        "resource_scope": "repo-file",
+        "resource_target": ".gemini/md/eso.md",
+        "success_next": "read-restart-order",
+        "failure_next": "done"
+      },
+      {
+        "id": "read-restart-order",
+        "scene_id": "detect-failure-shape",
+        "act_type": "READ",
+        "resource_scope": "repo-file",
+        "resource_target": ".gemini/md/restart-guide.md",
+        "success_next": "validate-kube-context",
+        "failure_next": "validate-kube-context"
+      },
+      {
+        "id": "validate-kube-context",
+        "scene_id": "validate-cluster-context",
+        "act_type": "VALIDATE",
+        "resource_scope": "kubeconfig-context",
+        "resource_target": "target GKE context and cluster reachability",
+        "success_next": "check-eso-crds",
+        "failure_next": "report-context-gap"
+      },
+      {
+        "id": "check-eso-crds",
+        "scene_id": "validate-cluster-context",
+        "act_type": "VERIFY",
+        "resource_scope": "kubernetes-crd",
+        "resource_target": "externalsecrets.external-secrets.io and secretstores.external-secrets.io",
+        "success_next": "check-eso-controller",
+        "failure_next": "execute-eso-install"
+      },
+      {
+        "id": "check-eso-controller",
+        "scene_id": "validate-cluster-context",
+        "act_type": "VERIFY",
+        "resource_scope": "kubernetes-workload",
+        "resource_target": "external-secrets namespace and controller deployment health",
+        "success_next": "check-externalsecret-state",
+        "failure_next": "execute-eso-install"
+      },
+      {
+        "id": "execute-eso-install",
+        "scene_id": "recover-eso",
+        "act_type": "EXECUTE",
+        "resource_scope": "helm-command",
+        "resource_target": "helm upgrade --install external-secrets external-secrets/external-secrets -n external-secrets --create-namespace --set installCRDs=true --set serviceAccount.annotations.\"iam\\.gke\\.io/gcp-service-account\"=\"eso-sa-prod@yourssu-morupark-494902.iam.gserviceaccount.com\"",
+        "success_next": "verify-crd-restored",
+        "failure_next": "report-eso-recovery-failure"
+      },
+      {
+        "id": "verify-crd-restored",
+        "scene_id": "recover-eso",
+        "act_type": "VERIFY",
+        "resource_scope": "kubernetes-crd",
+        "resource_target": "externalsecrets.external-secrets.io and secretstores.external-secrets.io",
+        "success_next": "apply-prod-overlay",
+        "failure_next": "report-eso-recovery-failure"
+      },
+      {
+        "id": "apply-prod-overlay",
+        "scene_id": "reapply-overlay",
+        "act_type": "EXECUTE",
+        "resource_scope": "kubectl-kustomize",
+        "resource_target": "kubectl apply -k infra/k8s/overlays/prod",
+        "success_next": "check-externalsecret-state",
+        "failure_next": "report-overlay-reapply-failure"
+      },
+      {
+        "id": "check-externalsecret-state",
+        "scene_id": "verify-sync",
+        "act_type": "VERIFY",
+        "resource_scope": "kubernetes-secret-sync",
+        "resource_target": "kubectl get externalsecret -n morupark-prod and kubectl get secret morupark-gcp-secrets -n morupark-prod",
+        "success_next": "check-dependent-workloads",
+        "failure_next": "report-sync-failure"
+      },
+      {
+        "id": "check-dependent-workloads",
+        "scene_id": "verify-sync",
+        "act_type": "VERIFY",
+        "resource_scope": "kubernetes-workloads",
+        "resource_target": "kubectl get pods and deploy,svc,ingress,hpa in morupark-prod",
+        "success_next": "emit-prevention-order",
+        "failure_next": "report-downstream-failure"
+      },
+      {
+        "id": "emit-prevention-order",
+        "scene_id": "prevention",
+        "act_type": "WRITE",
+        "resource_scope": "operator-guidance",
+        "resource_target": "Terraform -> get-credentials -> ESO Helm -> Kustomize gate and verification checklist",
+        "success_next": "done",
+        "failure_next": "done"
+      }
+    ]
+  },
+  "grounding": {
+    "policy": "Ground ESO diagnosis and prevention steps in repo-local runbooks and hooks. Do not invent secret sync behavior or recovery order beyond supported repo evidence.",
+    "sources": [
+      {
+        "path": ".gemini/md/eso.md",
+        "evidence": "Primary root cause, standard recovery steps, and recurrence prevention checklist."
+      },
+      {
+        "path": ".gemini/md/restart-guide.md",
+        "evidence": "Cluster bootstrap order showing Terraform, kubeconfig, ESO Helm, then Kustomize."
+      },
+      {
+        "path": ".gemini/hooks/pre-apply.sh",
+        "evidence": "Guardrails for Terraform and kubectl mutations."
+      },
+      {
+        "path": "infra/terraform/environments/prod/secret_manager.tf",
+        "evidence": "Secret Manager and ESO-related infrastructure wiring."
+      },
+      {
+        "path": "infra/terraform/environments/prod/iam.tf",
+        "evidence": "Workload identity and IAM dependencies relevant to ESO access."
+      }
+    ]
+  }
+}
