@@ -17,7 +17,7 @@
   spec:
     ingressClassName: "gce"
     rules:
-    - host: api.morupark.urssu.com
+    - host: morupark-api.urssu.com
       http:
         paths:
         - path: /

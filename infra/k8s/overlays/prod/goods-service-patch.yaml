@@ -1,4 +1,4 @@
-apiVersion: apps/v1
+﻿apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: goods-service
@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: goods-service
-        image: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/goods-service:latest
+        image: asia-northeast3-docker.pkg.dev/yourssu-morupark-494902/morupark-repo-private/goods-service:latest
         resources:
           requests:
             memory: "512Mi"
@@ -41,3 +41,4 @@ spec:
             value: "true"
           - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
             value: "health,info,metrics"
+
