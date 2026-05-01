@@ -10,30 +10,39 @@ resource "google_secret_manager_secret_version" "jwt_secret_version" {
   secret_data = "temporary-jwt-secret-replace-me-in-production"
 }
 
-# 기존에 존재하는 시크릿을 data 소스로 참조
-data "google_secret_manager_secret" "db_username_secret" {
+resource "google_secret_manager_secret" "db_username_secret" {
   secret_id = "morupark-db-username"
+  replication {
+    auto {}
+  }
 }
 
 resource "google_secret_manager_secret_version" "db_username_version" {
-  secret      = data.google_secret_manager_secret.db_username_secret.id
+  secret      = google_secret_manager_secret.db_username_secret.id
   secret_data = var.db_username
 }
 
-data "google_secret_manager_secret" "db_password_secret" {
+resource "google_secret_manager_secret" "db_password_secret" {
   secret_id = "morupark-db-password"
+  replication {
+    auto {}
+  }
 }
 
-data "google_secret_manager_secret_version" "db_password_version" {
-  secret = data.google_secret_manager_secret.db_password_secret.id
+resource "google_secret_manager_secret_version" "db_password_version" {
+  secret      = google_secret_manager_secret.db_password_secret.id
+  secret_data = var.db_password
 }
 
-data "google_secret_manager_secret" "redis_password_secret" {
+resource "google_secret_manager_secret" "redis_password_secret" {
   secret_id = "morupark-redis-password"
+  replication {
+    auto {}
+  }
 }
 
 resource "google_secret_manager_secret_version" "redis_password_version" {
-  secret      = data.google_secret_manager_secret.redis_password_secret.id
+  secret      = google_secret_manager_secret.redis_password_secret.id
   secret_data = var.db_password
 }
 
@@ -42,6 +51,11 @@ resource "google_secret_manager_secret" "admin_key" {
   replication {
     auto {}
   }
+}
+
+resource "google_secret_manager_secret_version" "admin_key_version" {
+  secret      = google_secret_manager_secret.admin_key.id
+  secret_data = var.admin_key
 }
 
 resource "google_service_account" "eso_sa" {
@@ -59,4 +73,6 @@ resource "google_service_account_iam_member" "eso_workload_identity" {
   service_account_id = google_service_account.eso_sa.name
   role               = "roles/iam.workloadIdentityUser"
   member             = "serviceAccount:${data.google_project.project.project_id}.svc.id.goog[external-secrets/external-secrets]"
+
+  depends_on = [module.gke]
 }

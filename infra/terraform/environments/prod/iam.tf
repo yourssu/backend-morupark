@@ -31,6 +31,8 @@ resource "google_service_account_iam_member" "workload_identity" {
   role               = "roles/iam.workloadIdentityUser"
 
   member = "serviceAccount:${local.project_id}.svc.id.goog[${var.namespace}/${each.value}]"
+
+  depends_on = [module.gke]
 }
 
 ############################################
