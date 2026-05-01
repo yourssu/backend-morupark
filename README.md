@@ -1,4 +1,4 @@
-# Morupark - 티켓 대기열 관리 시스템
+﻿# Morupark - 티켓 대기열 관리 시스템
 
 선착순 티켓팅 이벤트에서 대기열 관리, 추첨 처리, 결과 통지를 담당하는 MSA 기반 시스템입니다.
 
@@ -95,9 +95,3 @@ sub/           — 인프라 설정 (KafkaConfig, 예외 핸들러)
 # 단일 서비스 테스트
 ./gradlew :services-queue:test
 ```
-
-## 인프라
-
-- Kubernetes 매니페스트: `infra-aws/`(Kustomize), `infra-gcp/`(GKE)
-- CI/CD: `.github/workflows/image-build-and-upload.yaml`
-- 컨테이너: Alpine 기반 (`amazoncorretto:21-alpine`), 비루트 사용자(`morupark:1001`)
