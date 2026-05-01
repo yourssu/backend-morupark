@@ -10,7 +10,7 @@
 - **복구 능력 확인**: 부하가 줄어들었을 때 시스템이 정상 상태로 복구되는지 확인.
 
 ## 2. 테스트 환경
-- **Target URL**: `http://api.morupark.urssu.com` (GCP Ingress)
+- **Target URL**: `http://morupark-api.urssu.com` (GCP Ingress)
 - **Tool**: k6 (JavaScript 기반 부하 테스트 도구)
 - **Monitoring Tools**:
   - `kubectl top nodes/pods`: 리소스 사용량 실시간 모니터링
