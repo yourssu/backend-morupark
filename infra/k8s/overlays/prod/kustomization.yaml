@@ -1,4 +1,4 @@
-apiVersion: kustomize.config.k8s.io/v1beta1
+﻿apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 metadata:
@@ -38,6 +38,7 @@ patches:
       kind: HorizontalPodAutoscaler
       name: queue-service-hpa
   - path: sa-patch.yaml
+  - path: goods-sa-patch.yaml
   - path: sql-config-patch.yaml
   - path: goods-service-patch.yaml
     target:
@@ -54,11 +55,12 @@ labels:
       app.kubernetes.io/instance: morupark-prod
 
 images:
-  - name: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/auth-service
+  - name: asia-northeast3-docker.pkg.dev/yourssu-morupark-494902/morupark-repo-private/auth-service
     newTag: latest
-  - name: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/queue-service
+  - name: asia-northeast3-docker.pkg.dev/yourssu-morupark-494902/morupark-repo-private/queue-service
     newTag: latest
-  - name: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/api-gateway
+  - name: asia-northeast3-docker.pkg.dev/yourssu-morupark-494902/morupark-repo-private/api-gateway
     newTag: latest
-  - name: asia-northeast3-docker.pkg.dev/yourssu-morupark/morupark-repo-private/goods-service
+  - name: asia-northeast3-docker.pkg.dev/yourssu-morupark-494902/morupark-repo-private/goods-service
     newTag: latest
+
