@@ -1,0 +1,4 @@
+interface:
+  display_name: "클러스터 재프로비저닝 인계 운영"
+  short_description: "클러스터 재구축 이후 부트스트랩, 인계, 후속 검증을 정리하는 운영 스킬"
+  default_prompt: "$cluster-reprovision-handoff를 사용해 Terraform 이후 kubeconfig 복구, ESO 부트스트랩, 운영 오버레이 재적용, 사후 검증까지 재구축 인계 절차를 순서대로 진행합니다."

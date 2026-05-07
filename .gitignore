@@ -257,15 +257,18 @@ application-*.properties
 local/
 *.local
 docker-compose.yml
+legacy/
 
 
 # 로컬 테라폼 작업 디렉토리 (플러그인 및 캐시)
 .terraform/
 .terraform.lock.hcl
+infra/legacy/*
 
 # 테라폼 상태 파일 (가장 중요: 보안상 절대 커밋 금지)
 *.tfstate
 *.tfstate.backup
+*.tfplan
 
 # 변수 할당 파일 (민감한 값이 들어가는 곳)
 *.tfvars

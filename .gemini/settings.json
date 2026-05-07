@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow_shell_commands": [
+      "kubectl get",
+      "kubectl describe",
+      "kubectl logs",
+      "kubectl diff -k infra/k8s/overlays/dev",
+      "kubectl diff -k infra/k8s/overlays/prod",
+      "terraform -chdir=infra/terraform/environments/prod plan",
+      "terraform -chdir=infra/terraform/environments/prod validate",
+      "terraform -chdir=infra/terraform/environments/prod fmt",
+      "gcloud container clusters list"
+    ],
+    "require_confirmation": [
+      "kubectl apply",
+      "kubectl delete",
+      "kubectl patch",
+      "terraform apply",
+      "terraform destroy",
+      "gcloud container clusters delete"
+    ]
+  },
+  "context_optimization": {
+    "auto_read_gemini_md": true,
+    "max_file_read_lines": 600
+  }
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "K8s 배포 검증 운영"
+  short_description: "쿠버네티스 배포 상태를 확인하고 롤아웃 이상을 분류하는 운영 스킬"
+  default_prompt: "$k8s-release-verification를 사용해 오버레이와 네임스페이스 정합성, 배포 후 워크로드 상태, HPA·StatefulSet·이미지·프로브 관련 이상 여부를 운영 관점에서 점검합니다."

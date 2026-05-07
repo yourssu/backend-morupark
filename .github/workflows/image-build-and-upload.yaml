@@ -1,7 +1,7 @@
 name: Build and Push to GCP Artifact Registry
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 on:
@@ -10,9 +10,15 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      force_all:
+        description: "Build and push all 4 services regardless of changed paths"
+        required: false
+        type: boolean
+        default: true
 
 env:
-  GCP_PROJECT_ID: yourssu-morupark
+  GCP_PROJECT_ID: yourssu-morupark-494902
   GCP_REGION: asia-northeast3
   AR_REGISTRY: asia-northeast3-docker.pkg.dev
   AR_REPOSITORY: morupark-repo-private
@@ -65,19 +71,23 @@ jobs:
         id: set-matrix
         run: |
           modules=()
-          if [[ "${{ steps.filter.outputs.services-auth }}" == "true" ]]; then modules+=("services-auth"); fi
-          if [[ "${{ steps.filter.outputs.services-queue }}" == "true" ]]; then modules+=("services-queue"); fi
-          if [[ "${{ steps.filter.outputs.services-goods }}" == "true" ]]; then modules+=("services-goods"); fi
-          if [[ "${{ steps.filter.outputs.services-api-gateway }}" == "true" ]]; then modules+=("services-api-gateway"); fi
-          
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.force_all }}" == "true" ]]; then
+            modules=("services-auth" "services-queue" "services-goods" "services-api-gateway")
+          else
+            if [[ "${{ steps.filter.outputs.services-auth }}" == "true" ]]; then modules+=("services-auth"); fi
+            if [[ "${{ steps.filter.outputs.services-queue }}" == "true" ]]; then modules+=("services-queue"); fi
+            if [[ "${{ steps.filter.outputs.services-goods }}" == "true" ]]; then modules+=("services-goods"); fi
+            if [[ "${{ steps.filter.outputs.services-api-gateway }}" == "true" ]]; then modules+=("services-api-gateway"); fi
+          fi
+
           if [ ${#modules[@]} -eq 0 ]; then
-            echo "matrix={\"include\":[]}" >> $GITHUB_OUTPUT
+            echo 'matrix={"include":[]}' >> $GITHUB_OUTPUT
           else
             matrix_json=$(printf '%s\n' "${modules[@]}" | jq -R . | jq -s -c '{include: map({module: .})}')
             echo "matrix=${matrix_json}" >> $GITHUB_OUTPUT
           fi
 
-  build:
+  build-and-push:
     needs: detect-changes
     if: needs.detect-changes.outputs.matrix != '{"include":[]}'
     runs-on: ubuntu-latest
@@ -96,7 +106,6 @@ jobs:
           cache: 'gradle'
 
       - name: GCP Auth
-        id: auth
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
@@ -105,26 +114,23 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Configure Docker for Artifact Registry
-        run: |
-          gcloud auth configure-docker ${{ env.AR_REGISTRY }} --quiet
+        run: gcloud auth configure-docker ${{ env.AR_REGISTRY }} --quiet
 
-      - name: Build with Gradle (Test included)
+      - name: Build with Gradle (tests included)
         run: ./gradlew :${{ matrix.module }}:build
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Generate Docker meta
+      - name: Generate image tags
         id: meta
         run: |
-          # services-auth -> auth-service 형태의 이미지 이름을 맞추기 위함 (기존 컨벤션 준수)
           IMAGE_NAME=$(echo "${{ matrix.module }}" | sed 's/services-//')-service
-          # api-gateway-service는 예외적으로 api-gateway로 맞출 수도 있으나, 여기서는 일괄 -service 적용 후 조정
           if [[ "${IMAGE_NAME}" == "api-gateway-service" ]]; then IMAGE_NAME="api-gateway"; fi
-          
+
           TAG_SHA="${{ env.AR_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/${IMAGE_NAME}:sha-${{ needs.detect-changes.outputs.version }}"
           TAG_LATEST="${{ env.AR_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/${IMAGE_NAME}:latest"
-          
+
           echo "tags=${TAG_SHA},${TAG_LATEST}" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image
@@ -132,13 +138,13 @@ jobs:
         with:
           context: .
           file: ${{ matrix.module }}/Dockerfile
-          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          push: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
           tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha,scope=${{ matrix.module }}
           cache-to: type=gha,mode=max,scope=${{ matrix.module }}
 
   summary:
-    needs: [detect-changes, build]
+    needs: [detect-changes, build-and-push]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -146,4 +152,4 @@ jobs:
         run: |
           echo "## Build Results" >> $GITHUB_STEP_SUMMARY
           echo "- **Version**: \`${{ needs.detect-changes.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status**: ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ needs.build-and-push.result }}" >> $GITHUB_STEP_SUMMARY

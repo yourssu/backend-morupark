@@ -1,0 +1,473 @@
+{
+  "skill": {
+    "name": "infra-ops",
+    "kind": "repo-local-skill",
+    "sidecar_format": "ssl-v1",
+    "human_document": "SKILL.md"
+  },
+  "scheduling": {
+    "goal": "Handle repeated infrastructure work for this repository with explicit preflight checks, Terraform guardrails, and grounded follow-up operations.",
+    "trigger_phrases": [
+      "prepare prod terraform provisioning",
+      "check what is needed before terraform plan",
+      "summarize follow-up work after terraform apply",
+      "terraform prod ops",
+      "infra provisioning"
+    ],
+    "intent_signatures": [
+      "inspect-repo-infra-workflow",
+      "prepare-prod-terraform-run",
+      "review-prod-terraform-change",
+      "apply-approved-terraform-plan",
+      "verify-post-provision-state",
+      "run-db-or-k8s-follow-up"
+    ],
+    "expected_inputs": [
+      "user request describing target infra task",
+      "target path under infra/",
+      "environment name such as prod",
+      "variable or credential availability when plan/apply is requested"
+    ],
+    "expected_outputs": [
+      "preflight summary",
+      "safe execution plan",
+      "terraform command sequence",
+      "verification findings",
+      "follow-up action list or execution result"
+    ],
+    "tags": [
+      "terraform",
+      "gcp",
+      "gke",
+      "cloud-sql",
+      "secret-manager",
+      "cloudflare",
+      "kubernetes",
+      "production"
+    ],
+    "dependencies": [
+      "infra/README.md",
+      "infra/scripts/setup/setup-harness.sh",
+      "infra/terraform/environments/prod",
+      "infra/scripts/utility/create_moruparkdb_prod.py",
+      ".gemini/skills/terraform-prod-ops.md"
+    ],
+    "control_signals": {
+      "has_branching": true,
+      "has_loops": false,
+      "uses_tool_calls": true,
+      "requires_human_approval_for_mutation": true
+    },
+    "mutation_profile": {
+      "can_read_repo_files": true,
+      "can_execute_validation_commands": true,
+      "can_mutate_cloud_state": true,
+      "can_mutate_repo_files": false
+    },
+    "sensitive_resource_flags": [
+      "gcp-project-context",
+      "terraform-prod-environment",
+      "cloudflare-dns-token",
+      "secret-manager-secret-values",
+      "database-admin-credentials"
+    ]
+  },
+  "structural": {
+    "entry_scene": "preflight",
+    "scenes": [
+      {
+        "id": "preflight",
+        "purpose": "Confirm the repo path, required tools, and intended infra target before deeper inspection.",
+        "inputs": [
+          "user request",
+          "repo root"
+        ],
+        "outputs": [
+          "tool availability status",
+          "target environment guess"
+        ],
+        "entry_conditions": [
+          "request touches infra work"
+        ],
+        "exit_conditions": [
+          "required files and paths identified"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "required repo context exists",
+            "goto": "inspect-context"
+          },
+          {
+            "when": "required context is missing or inconsistent",
+            "goto": "recovery"
+          }
+        ]
+      },
+      {
+        "id": "inspect-context",
+        "purpose": "Read the Terraform environment, source skills, and harness bootstrap guidance.",
+        "inputs": [
+          "infra path",
+          "preflight summary"
+        ],
+        "outputs": [
+          "environment facts",
+          "module and variable inventory"
+        ],
+        "entry_conditions": [
+          "preflight completed"
+        ],
+        "exit_conditions": [
+          "environment topology understood"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "task is read-only review",
+            "goto": "verify"
+          },
+          {
+            "when": "task may lead to terraform execution",
+            "goto": "validate-inputs"
+          }
+        ]
+      },
+      {
+        "id": "validate-inputs",
+        "purpose": "Check variable-sensitive and provider-sensitive inputs before any Terraform mutation path.",
+        "inputs": [
+          "environment facts",
+          "requested action"
+        ],
+        "outputs": [
+          "validated input list",
+          "missing input warnings"
+        ],
+        "entry_conditions": [
+          "terraform execution path requested"
+        ],
+        "exit_conditions": [
+          "required inputs and guardrails assessed"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "inputs are sufficient for safe planning",
+            "goto": "plan"
+          },
+          {
+            "when": "inputs are missing or unsafe",
+            "goto": "recovery"
+          }
+        ]
+      },
+      {
+        "id": "plan",
+        "purpose": "Produce the guarded Terraform validation and plan sequence.",
+        "inputs": [
+          "validated inputs",
+          "target environment path"
+        ],
+        "outputs": [
+          "fmt-check result",
+          "validate result",
+          "plan artifact intent"
+        ],
+        "entry_conditions": [
+          "inputs validated"
+        ],
+        "exit_conditions": [
+          "plan command sequence ready or executed"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "user only asked for prep or review",
+            "goto": "verify"
+          },
+          {
+            "when": "user requested mutable apply path",
+            "goto": "approval-gated-apply"
+          }
+        ]
+      },
+      {
+        "id": "approval-gated-apply",
+        "purpose": "Apply an explicit plan only when the request clearly authorizes mutation.",
+        "inputs": [
+          "plan artifact",
+          "user approval state"
+        ],
+        "outputs": [
+          "apply result",
+          "provisioning status"
+        ],
+        "entry_conditions": [
+          "plan exists",
+          "mutation is requested and allowed"
+        ],
+        "exit_conditions": [
+          "apply completed or blocked"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "apply succeeds",
+            "goto": "verify"
+          },
+          {
+            "when": "apply fails or is blocked",
+            "goto": "recovery"
+          }
+        ]
+      },
+      {
+        "id": "verify",
+        "purpose": "Check outputs, resource state clues, and downstream handoff points.",
+        "inputs": [
+          "plan or apply result",
+          "environment facts"
+        ],
+        "outputs": [
+          "verification summary",
+          "follow-up recommendation"
+        ],
+        "entry_conditions": [
+          "read-only review completed or terraform step completed"
+        ],
+        "exit_conditions": [
+          "verification complete"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "follow-up ops are in scope",
+            "goto": "follow-up-ops"
+          },
+          {
+            "when": "no downstream task is needed",
+            "goto": "done"
+          }
+        ]
+      },
+      {
+        "id": "follow-up-ops",
+        "purpose": "Handle grounded follow-up actions such as DB creation or K8s handoff checks.",
+        "inputs": [
+          "verification summary",
+          "user request"
+        ],
+        "outputs": [
+          "follow-up execution result",
+          "handoff notes"
+        ],
+        "entry_conditions": [
+          "follow-up action requested or required"
+        ],
+        "exit_conditions": [
+          "follow-up completed or deferred"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "follow-up succeeds",
+            "goto": "done"
+          },
+          {
+            "when": "follow-up cannot proceed safely",
+            "goto": "recovery"
+          }
+        ]
+      },
+      {
+        "id": "recovery",
+        "purpose": "Stop unsafe execution, surface missing prerequisites, and offer the smallest safe next step.",
+        "inputs": [
+          "failure reason"
+        ],
+        "outputs": [
+          "blocked status",
+          "next safe action"
+        ],
+        "entry_conditions": [
+          "any required check fails or mutation path is unsafe"
+        ],
+        "exit_conditions": [
+          "user can resume from a safer state"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "always",
+            "goto": "done"
+          }
+        ]
+      }
+    ]
+  },
+  "logical": {
+    "entry_step": "read-infra-readme",
+    "steps": [
+      {
+        "id": "read-infra-readme",
+        "scene_id": "preflight",
+        "act_type": "READ",
+        "resource_scope": "repo-file",
+        "resource_target": "infra/README.md",
+        "success_next": "validate-setup-script",
+        "failure_next": "report-missing-root-context"
+      },
+      {
+        "id": "validate-setup-script",
+        "scene_id": "preflight",
+        "act_type": "VALIDATE",
+        "resource_scope": "repo-file",
+        "resource_target": "infra/scripts/setup/setup-harness.sh",
+        "success_next": "read-prod-environment",
+        "failure_next": "report-missing-preflight-source"
+      },
+      {
+        "id": "read-prod-environment",
+        "scene_id": "inspect-context",
+        "act_type": "READ",
+        "resource_scope": "repo-directory",
+        "resource_target": "infra/terraform/environments/prod",
+        "success_next": "select-terraform-path",
+        "failure_next": "report-missing-prod-env"
+      },
+      {
+        "id": "select-terraform-path",
+        "scene_id": "inspect-context",
+        "act_type": "SELECT",
+        "resource_scope": "execution-target",
+        "resource_target": "infra/terraform/environments/prod",
+        "success_next": "validate-sensitive-inputs",
+        "failure_next": "report-ambiguous-target"
+      },
+      {
+        "id": "validate-sensitive-inputs",
+        "scene_id": "validate-inputs",
+        "act_type": "VALIDATE",
+        "resource_scope": "config-and-secrets",
+        "resource_target": "project_id, authorized_ip_cidrs, db_username, db_password, admin_key, cloudflare_api_token, cloudflare_zone_id, GOOGLE_CREDENTIALS",
+        "success_next": "execute-fmt-check",
+        "failure_next": "report-missing-inputs"
+      },
+      {
+        "id": "execute-fmt-check",
+        "scene_id": "plan",
+        "act_type": "EXECUTE",
+        "resource_scope": "terraform-cli",
+        "resource_target": "terraform -chdir=infra/terraform/environments/prod fmt -check",
+        "success_next": "execute-validate",
+        "failure_next": "report-plan-precheck-failure"
+      },
+      {
+        "id": "execute-validate",
+        "scene_id": "plan",
+        "act_type": "EXECUTE",
+        "resource_scope": "terraform-cli",
+        "resource_target": "terraform -chdir=infra/terraform/environments/prod validate",
+        "success_next": "execute-plan",
+        "failure_next": "report-plan-precheck-failure"
+      },
+      {
+        "id": "execute-plan",
+        "scene_id": "plan",
+        "act_type": "EXECUTE",
+        "resource_scope": "terraform-cli",
+        "resource_target": "terraform -chdir=infra/terraform/environments/prod plan -out=prod.tfplan",
+        "success_next": "verify-plan-shape",
+        "failure_next": "report-plan-failure"
+      },
+      {
+        "id": "verify-plan-shape",
+        "scene_id": "verify",
+        "act_type": "VERIFY",
+        "resource_scope": "terraform-plan-artifact",
+        "resource_target": "infra/terraform/environments/prod/prod.tfplan",
+        "success_next": "execute-apply",
+        "failure_next": "report-plan-artifact-missing"
+      },
+      {
+        "id": "execute-apply",
+        "scene_id": "approval-gated-apply",
+        "act_type": "EXECUTE",
+        "resource_scope": "terraform-cli",
+        "resource_target": "terraform -chdir=infra/terraform/environments/prod apply prod.tfplan",
+        "success_next": "verify-outputs",
+        "failure_next": "report-apply-failure"
+      },
+      {
+        "id": "verify-outputs",
+        "scene_id": "verify",
+        "act_type": "VERIFY",
+        "resource_scope": "terraform-output",
+        "resource_target": "infra/terraform/environments/prod/outputs.tf",
+        "success_next": "read-db-followup",
+        "failure_next": "report-verification-gap"
+      },
+      {
+        "id": "read-db-followup",
+        "scene_id": "follow-up-ops",
+        "act_type": "READ",
+        "resource_scope": "repo-script",
+        "resource_target": "infra/scripts/utility/create_moruparkdb_prod.py",
+        "success_next": "execute-db-create",
+        "failure_next": "report-followup-missing"
+      },
+      {
+        "id": "execute-db-create",
+        "scene_id": "follow-up-ops",
+        "act_type": "EXECUTE",
+        "resource_scope": "gcloud-sql",
+        "resource_target": "gcloud sql databases create moruparkdb_prod --instance=morupark-db-prod --project=yourssu-morupark-494902",
+        "success_next": "verify-followup-handoff",
+        "failure_next": "report-followup-failure"
+      },
+      {
+        "id": "verify-followup-handoff",
+        "scene_id": "follow-up-ops",
+        "act_type": "VERIFY",
+        "resource_scope": "k8s-and-secret-handoff",
+        "resource_target": "infra/k8s and Terraform output dependent follow-up state",
+        "success_next": "done",
+        "failure_next": "report-followup-failure"
+      }
+    ]
+  },
+  "grounding": {
+    "policy": "Extract only from repo-local evidence and existing skill sources. Do not infer unsupported mutation paths or hidden provider behavior.",
+    "sources": [
+      {
+        "path": "infra/README.md",
+        "evidence": "Infra directory layout and Terraform path."
+      },
+      {
+        "path": "infra/scripts/setup/setup-harness.sh",
+        "evidence": "Required binaries and expected infra paths."
+      },
+      {
+        "path": ".gemini/skills/terraform-prod-ops.md",
+        "evidence": "Recommended Terraform order and guardrails."
+      },
+      {
+        "path": "infra/terraform/environments/prod/main.tf",
+        "evidence": "Provider setup, modules, instance names, database name."
+      },
+      {
+        "path": "infra/terraform/environments/prod/variables.tf",
+        "evidence": "Required and optional input variables."
+      },
+      {
+        "path": "infra/terraform/environments/prod/secret_manager.tf",
+        "evidence": "Secret Manager resources and service account wiring."
+      },
+      {
+        "path": "infra/terraform/environments/prod/dns.tf",
+        "evidence": "Conditional Cloudflare DNS record management."
+      },
+      {
+        "path": "infra/terraform/environments/prod/outputs.tf",
+        "evidence": "Ingress static IP output."
+      },
+      {
+        "path": "infra/scripts/utility/create_moruparkdb_prod.py",
+        "evidence": "Post-provision Cloud SQL database creation command."
+      }
+    ]
+  }
+}

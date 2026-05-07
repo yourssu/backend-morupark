@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: morupark-prod
+  namespace: default
+  annotations:
+    argocd-image-updater.argoproj.io/image-list: auth=asia-northeast3-docker.pkg.dev/yourssu-morupark-494902/morupark-repo-private/auth-service,queue=asia-northeast3-docker.pkg.dev/yourssu-morupark-494902/morupark-repo-private/queue-service,api=asia-northeast3-docker.pkg.dev/yourssu-morupark-494902/morupark-repo-private/api-gateway,goods=asia-northeast3-docker.pkg.dev/yourssu-morupark-494902/morupark-repo-private/goods-service
+    argocd-image-updater.argoproj.io/write-back-method: git
+    argocd-image-updater.argoproj.io/git-branch: main
+    argocd-image-updater.argoproj.io/auth.update-strategy: newest-build
+    argocd-image-updater.argoproj.io/queue.update-strategy: newest-build
+    argocd-image-updater.argoproj.io/api.update-strategy: newest-build
+    argocd-image-updater.argoproj.io/goods.update-strategy: newest-build
+    argocd-image-updater.argoproj.io/auth.allow-tags: regexp:^sha-[a-f0-9]{8}$
+    argocd-image-updater.argoproj.io/queue.allow-tags: regexp:^sha-[a-f0-9]{8}$
+    argocd-image-updater.argoproj.io/api.allow-tags: regexp:^sha-[a-f0-9]{8}$
+    argocd-image-updater.argoproj.io/goods.allow-tags: regexp:^sha-[a-f0-9]{8}$
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/yourssu/backend-morupark.git
+    targetRevision: main
+    path: infra/k8s/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: morupark-prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

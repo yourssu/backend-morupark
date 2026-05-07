@@ -1,0 +1,275 @@
+{
+  "skill": {
+    "name": "skill-ssl-authoring",
+    "kind": "repo-local-skill",
+    "sidecar_format": "ssl-v1",
+    "human_document": "SKILL.md"
+  },
+  "scheduling": {
+    "goal": "Standardize new repo-local skills around concise SKILL.md documents plus grounded SSL sidecar graphs.",
+    "trigger_phrases": [
+      "create a new infra skill with SSL",
+      "split SKILL.md into SKILL.md plus ssl.json",
+      "convert this skill to SSL",
+      "create a new repo-local skill"
+    ],
+    "intent_signatures": [
+      "create-new-ssl-skill",
+      "convert-text-skill-to-ssl",
+      "update-existing-ssl-skill",
+      "review-skill-graph-grounding"
+    ],
+    "expected_inputs": [
+      "source skill text or repo workflow",
+      "target skill name",
+      "intended resources such as references or assets"
+    ],
+    "expected_outputs": [
+      "SKILL.md",
+      "ssl.json",
+      "agents/openai.yaml",
+      "optional references or assets"
+    ],
+    "tags": [
+      "skills",
+      "ssl",
+      "authoring",
+      "normalization",
+      "codex"
+    ],
+    "dependencies": [
+      ".agents/skills",
+      ".gemini/skills",
+      "assets/ssl-template.json",
+      "references/ssl-schema-guide.md",
+      "references/conversion-playbook.md"
+    ],
+    "control_signals": {
+      "has_branching": true,
+      "has_loops": false,
+      "uses_tool_calls": true,
+      "requires_human_approval_for_mutation": false
+    },
+    "mutation_profile": {
+      "can_read_repo_files": true,
+      "can_execute_validation_commands": true,
+      "can_mutate_repo_files": true,
+      "can_mutate_cloud_state": false
+    },
+    "sensitive_resource_flags": [
+      "skill-discovery-surface",
+      "resource-risk-metadata"
+    ]
+  },
+  "structural": {
+    "entry_scene": "collect-sources",
+    "scenes": [
+      {
+        "id": "collect-sources",
+        "purpose": "Gather the source skill text and repo facts.",
+        "inputs": [
+          "source skill files",
+          "repo context"
+        ],
+        "outputs": [
+          "source evidence set"
+        ],
+        "entry_conditions": [
+          "skill authoring request exists"
+        ],
+        "exit_conditions": [
+          "source files identified"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "source evidence is available",
+            "goto": "extract-scheduling"
+          }
+        ]
+      },
+      {
+        "id": "extract-scheduling",
+        "purpose": "Extract invocation fit, inputs, outputs, and risk markers.",
+        "inputs": [
+          "source evidence set"
+        ],
+        "outputs": [
+          "scheduling layer draft"
+        ],
+        "entry_conditions": [
+          "source files identified"
+        ],
+        "exit_conditions": [
+          "scheduling layer drafted"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "scheduling draft is complete",
+            "goto": "extract-structural"
+          }
+        ]
+      },
+      {
+        "id": "extract-structural",
+        "purpose": "Turn the workflow into scenes and transitions.",
+        "inputs": [
+          "source evidence set"
+        ],
+        "outputs": [
+          "structural layer draft"
+        ],
+        "entry_conditions": [
+          "scheduling draft complete"
+        ],
+        "exit_conditions": [
+          "structural layer drafted"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "structural draft is complete",
+            "goto": "extract-logical"
+          }
+        ]
+      },
+      {
+        "id": "extract-logical",
+        "purpose": "Break scenes into atomic actions and resource evidence.",
+        "inputs": [
+          "source evidence set",
+          "structural layer draft"
+        ],
+        "outputs": [
+          "logical layer draft"
+        ],
+        "entry_conditions": [
+          "structural draft complete"
+        ],
+        "exit_conditions": [
+          "logical layer drafted"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "logical draft is complete",
+            "goto": "compose-skill"
+          }
+        ]
+      },
+      {
+        "id": "compose-skill",
+        "purpose": "Write SKILL.md, ssl.json, and any supporting references or assets.",
+        "inputs": [
+          "all SSL drafts"
+        ],
+        "outputs": [
+          "complete skill package"
+        ],
+        "entry_conditions": [
+          "all layers drafted"
+        ],
+        "exit_conditions": [
+          "skill package written"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "package is internally consistent",
+            "goto": "validate"
+          }
+        ]
+      },
+      {
+        "id": "validate",
+        "purpose": "Review identifier consistency, transitions, and grounding.",
+        "inputs": [
+          "complete skill package"
+        ],
+        "outputs": [
+          "validation result"
+        ],
+        "entry_conditions": [
+          "skill package written"
+        ],
+        "exit_conditions": [
+          "validation reviewed"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "always",
+            "goto": "done"
+          }
+        ]
+      }
+    ]
+  },
+  "logical": {
+    "entry_step": "read-source-skill",
+    "steps": [
+      {
+        "id": "read-source-skill",
+        "scene_id": "collect-sources",
+        "act_type": "READ",
+        "resource_scope": "repo-file",
+        "resource_target": "source skill text or workflow files",
+        "success_next": "infer-scheduling-fit",
+        "failure_next": "done"
+      },
+      {
+        "id": "infer-scheduling-fit",
+        "scene_id": "extract-scheduling",
+        "act_type": "INFER",
+        "resource_scope": "skill-metadata",
+        "resource_target": "invocation fit, inputs, outputs, tags, risk flags",
+        "success_next": "select-scenes",
+        "failure_next": "done"
+      },
+      {
+        "id": "select-scenes",
+        "scene_id": "extract-structural",
+        "act_type": "SELECT",
+        "resource_scope": "workflow-scenes",
+        "resource_target": "scene ids, transitions, entry scene",
+        "success_next": "infer-atomic-actions",
+        "failure_next": "done"
+      },
+      {
+        "id": "infer-atomic-actions",
+        "scene_id": "extract-logical",
+        "act_type": "INFER",
+        "resource_scope": "action-graph",
+        "resource_target": "atomic actions with enum act_type and resource targets",
+        "success_next": "write-skill-files",
+        "failure_next": "done"
+      },
+      {
+        "id": "write-skill-files",
+        "scene_id": "compose-skill",
+        "act_type": "WRITE",
+        "resource_scope": "skill-package",
+        "resource_target": "SKILL.md, ssl.json, agents/openai.yaml, references, assets",
+        "success_next": "validate-consistency",
+        "failure_next": "done"
+      },
+      {
+        "id": "validate-consistency",
+        "scene_id": "validate",
+        "act_type": "VERIFY",
+        "resource_scope": "ssl-package",
+        "resource_target": "scene ids, step ids, transitions, grounding sources",
+        "success_next": "done",
+        "failure_next": "done"
+      }
+    ]
+  },
+  "grounding": {
+    "policy": "Ground every field in source skill text or local repo evidence. Do not invent actions, risks, or dependencies that are absent from source material.",
+    "sources": [
+      {
+        "path": ".gemini/skills",
+        "evidence": "Existing text-first skills available for conversion."
+      },
+      {
+        "path": ".agents/skills/infra-ops",
+        "evidence": "Concrete in-repo example of the sidecar SSL pattern."
+      }
+    ]
+  }
+}

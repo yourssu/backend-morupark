@@ -1,0 +1,361 @@
+{
+  "skill": {
+    "name": "cluster-reprovision-handoff",
+    "kind": "repo-local-skill",
+    "sidecar_format": "ssl-v1",
+    "human_document": "SKILL.md"
+  },
+  "scheduling": {
+    "goal": "Provide a safe rebuild and handoff workflow after Terraform provisioning or cluster recreation, including kubeconfig restoration, operator bootstrap, overlay reapply, and downstream verification.",
+    "trigger_phrases": [
+      "reprovision cluster",
+      "after terraform apply what next",
+      "cluster rebuild handoff",
+      "post terraform kubernetes recovery",
+      "restart infra from scratch"
+    ],
+    "intent_signatures": [
+      "review-cluster-rebuild-sequence",
+      "restore-post-terraform-cluster-access",
+      "bootstrap-post-reprovision-operators",
+      "verify-post-rebuild-readiness"
+    ],
+    "expected_inputs": [
+      "user request about rebuild or reprovisioning",
+      "target environment such as prod",
+      "current Terraform and cluster state"
+    ],
+    "expected_outputs": [
+      "ordered rebuild plan",
+      "handoff checklist",
+      "verification findings",
+      "next safe action"
+    ],
+    "tags": [
+      "terraform",
+      "gke",
+      "kubernetes",
+      "reprovision",
+      "handoff",
+      "production"
+    ],
+    "dependencies": [
+      ".gemini/md/restart-guide.md",
+      ".gemini/md/problem-solving.md",
+      ".gemini/md/implementation.md",
+      ".gemini/hooks/pre-apply.sh",
+      ".gemini/hooks/post-deploy.sh",
+      ".gemini/skills/terraform-prod-ops.md",
+      ".gemini/skills/k8s-release-ops.md",
+      "infra/terraform/environments/prod"
+    ],
+    "control_signals": {
+      "has_branching": true,
+      "has_loops": false,
+      "uses_tool_calls": true,
+      "requires_human_approval_for_mutation": true
+    },
+    "mutation_profile": {
+      "can_read_repo_files": true,
+      "can_execute_validation_commands": true,
+      "can_mutate_repo_files": false,
+      "can_mutate_cloud_state": true
+    },
+    "sensitive_resource_flags": [
+      "terraform-prod-environment",
+      "kubeconfig-context",
+      "eso-bootstrap",
+      "prod-overlay-apply",
+      "production-workloads"
+    ]
+  },
+  "structural": {
+    "entry_scene": "classify-rebuild-scope",
+    "scenes": [
+      {
+        "id": "classify-rebuild-scope",
+        "purpose": "Determine whether the task is planning, recovery, or verification after reprovisioning.",
+        "inputs": [
+          "user request",
+          "repo context"
+        ],
+        "outputs": [
+          "task mode",
+          "environment target"
+        ],
+        "entry_conditions": [
+          "request mentions rebuild, reprovisioning, restart, or post-Terraform next steps"
+        ],
+        "exit_conditions": [
+          "scope classified"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "rebuild flow is in scope",
+            "goto": "inspect-bootstrap-order"
+          }
+        ]
+      },
+      {
+        "id": "inspect-bootstrap-order",
+        "purpose": "Read rebuild order and Terraform-related guardrails.",
+        "inputs": [
+          "task mode"
+        ],
+        "outputs": [
+          "bootstrap sequence facts"
+        ],
+        "entry_conditions": [
+          "rebuild or post-provision flow is relevant"
+        ],
+        "exit_conditions": [
+          "required order understood"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "cluster access needs refresh",
+            "goto": "restore-cluster-access"
+          },
+          {
+            "when": "cluster access already exists",
+            "goto": "bootstrap-operators"
+          }
+        ]
+      },
+      {
+        "id": "restore-cluster-access",
+        "purpose": "Refresh kubeconfig and verify the intended cluster context.",
+        "inputs": [
+          "bootstrap sequence facts"
+        ],
+        "outputs": [
+          "cluster access state"
+        ],
+        "entry_conditions": [
+          "cluster access may be stale or missing"
+        ],
+        "exit_conditions": [
+          "kubectl can target the intended cluster"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "cluster context is usable",
+            "goto": "bootstrap-operators"
+          },
+          {
+            "when": "cluster access remains blocked",
+            "goto": "recovery"
+          }
+        ]
+      },
+      {
+        "id": "bootstrap-operators",
+        "purpose": "Ensure cluster-level prerequisites such as ESO exist before overlay apply.",
+        "inputs": [
+          "cluster access state"
+        ],
+        "outputs": [
+          "operator readiness state"
+        ],
+        "entry_conditions": [
+          "cluster access is available"
+        ],
+        "exit_conditions": [
+          "bootstrap prerequisites assessed"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "prerequisites are ready",
+            "goto": "apply-overlay"
+          },
+          {
+            "when": "prerequisites need mutation",
+            "goto": "apply-overlay"
+          }
+        ]
+      },
+      {
+        "id": "apply-overlay",
+        "purpose": "Re-apply the prod overlay and restore workload definitions after rebuild.",
+        "inputs": [
+          "operator readiness state"
+        ],
+        "outputs": [
+          "overlay apply result"
+        ],
+        "entry_conditions": [
+          "bootstrap prerequisites are satisfied"
+        ],
+        "exit_conditions": [
+          "overlay applied or review-only outcome recorded"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "overlay step completed",
+            "goto": "verify-handoff"
+          }
+        ]
+      },
+      {
+        "id": "verify-handoff",
+        "purpose": "Verify that secrets, workloads, and service endpoints are ready after rebuild.",
+        "inputs": [
+          "overlay apply result"
+        ],
+        "outputs": [
+          "handoff verification summary"
+        ],
+        "entry_conditions": [
+          "overlay step finished or read-only verification requested"
+        ],
+        "exit_conditions": [
+          "handoff state known"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "verification complete",
+            "goto": "done"
+          }
+        ]
+      },
+      {
+        "id": "recovery",
+        "purpose": "Stop unsafe execution and surface the next unblocker.",
+        "inputs": [
+          "blocked reason"
+        ],
+        "outputs": [
+          "blocked status",
+          "next safe action"
+        ],
+        "entry_conditions": [
+          "required cluster or bootstrap check failed"
+        ],
+        "exit_conditions": [
+          "user can resume safely"
+        ],
+        "next_scene_rules": [
+          {
+            "when": "always",
+            "goto": "done"
+          }
+        ]
+      }
+    ]
+  },
+  "logical": {
+    "entry_step": "read-restart-guide",
+    "steps": [
+      {
+        "id": "read-restart-guide",
+        "scene_id": "inspect-bootstrap-order",
+        "act_type": "READ",
+        "resource_scope": "repo-file",
+        "resource_target": ".gemini/md/restart-guide.md",
+        "success_next": "read-terraform-ops-skill",
+        "failure_next": "done"
+      },
+      {
+        "id": "read-terraform-ops-skill",
+        "scene_id": "inspect-bootstrap-order",
+        "act_type": "READ",
+        "resource_scope": "repo-file",
+        "resource_target": ".gemini/skills/terraform-prod-ops.md",
+        "success_next": "read-k8s-release-ops",
+        "failure_next": "read-k8s-release-ops"
+      },
+      {
+        "id": "read-k8s-release-ops",
+        "scene_id": "inspect-bootstrap-order",
+        "act_type": "READ",
+        "resource_scope": "repo-file",
+        "resource_target": ".gemini/skills/k8s-release-ops.md",
+        "success_next": "validate-kubeconfig",
+        "failure_next": "validate-kubeconfig"
+      },
+      {
+        "id": "validate-kubeconfig",
+        "scene_id": "restore-cluster-access",
+        "act_type": "VALIDATE",
+        "resource_scope": "kubeconfig-context",
+        "resource_target": "gcloud get-credentials requirement and kubectl cluster reachability",
+        "success_next": "verify-eso-prereqs",
+        "failure_next": "report-cluster-access-gap"
+      },
+      {
+        "id": "verify-eso-prereqs",
+        "scene_id": "bootstrap-operators",
+        "act_type": "VERIFY",
+        "resource_scope": "cluster-bootstrap-prerequisites",
+        "resource_target": "ESO installation and required CRDs before overlay apply",
+        "success_next": "apply-prod-overlay",
+        "failure_next": "apply-prod-overlay"
+      },
+      {
+        "id": "apply-prod-overlay",
+        "scene_id": "apply-overlay",
+        "act_type": "EXECUTE",
+        "resource_scope": "kubectl-kustomize",
+        "resource_target": "kubectl apply -k infra/k8s/overlays/prod",
+        "success_next": "run-post-deploy-checks",
+        "failure_next": "report-overlay-apply-failure"
+      },
+      {
+        "id": "run-post-deploy-checks",
+        "scene_id": "verify-handoff",
+        "act_type": "EXECUTE",
+        "resource_scope": "repo-hook",
+        "resource_target": ".gemini/hooks/post-deploy.sh morupark-prod",
+        "success_next": "verify-secret-sync",
+        "failure_next": "verify-secret-sync"
+      },
+      {
+        "id": "verify-secret-sync",
+        "scene_id": "verify-handoff",
+        "act_type": "VERIFY",
+        "resource_scope": "kubernetes-secret-sync",
+        "resource_target": "morupark-gcp-secrets and ExternalSecret readiness in morupark-prod",
+        "success_next": "verify-endpoint-followups",
+        "failure_next": "report-secret-sync-gap"
+      },
+      {
+        "id": "verify-endpoint-followups",
+        "scene_id": "verify-handoff",
+        "act_type": "VERIFY",
+        "resource_scope": "ingress-and-workloads",
+        "resource_target": "pods, ingress, hpa, and remaining post-rebuild blockers",
+        "success_next": "done",
+        "failure_next": "done"
+      }
+    ]
+  },
+  "grounding": {
+    "policy": "Ground rebuild sequencing and handoff checks in repo-local restart notes, hooks, and existing Gemini skills. Do not compress operator bootstrap and workload rollout into unsupported shortcuts.",
+    "sources": [
+      {
+        "path": ".gemini/md/restart-guide.md",
+        "evidence": "Canonical order for Terraform, kubeconfig, ESO installation, and Kustomize apply."
+      },
+      {
+        "path": ".gemini/md/problem-solving.md",
+        "evidence": "Observed failure modes after deploy and rebuild, including secrets, image, and workload issues."
+      },
+      {
+        "path": ".gemini/hooks/post-deploy.sh",
+        "evidence": "Post-deploy verification command set."
+      },
+      {
+        "path": ".gemini/hooks/pre-apply.sh",
+        "evidence": "Mutation guardrails for Terraform and kubectl commands."
+      },
+      {
+        "path": ".gemini/skills/terraform-prod-ops.md",
+        "evidence": "Terraform order and apply guardrails."
+      },
+      {
+        "path": ".gemini/skills/k8s-release-ops.md",
+        "evidence": "Kustomize release path and verification checkpoints."
+      }
+    ]
+  }
+}
