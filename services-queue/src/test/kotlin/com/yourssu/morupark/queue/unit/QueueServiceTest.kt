@@ -6,6 +6,7 @@ import com.yourssu.morupark.queue.business.TicketStatus
 import com.yourssu.morupark.queue.implement.QueueAdapter
 import com.yourssu.morupark.queue.implement.WaitingTimeEstimator
 import com.yourssu.morupark.queue.sub.exception.InvalidWaitingTokenException
+import com.yourssu.morupark.queue.sub.exception.SoldOutException
 import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
@@ -103,6 +104,17 @@ class QueueServiceTest {
         // then
         assertEquals(TicketStatus.FAILED, result.status)
         assertEquals(FailureReason.SOLD_OUT, result.reason)
+    }
+
+    @Test
+    fun `품절된 경우 enqueue 시 SoldOutException이 발생한다`() {
+        // given
+        every { queueAdapter.isSoldOut(any()) } returns true
+
+        // when & then
+        assertThrows<SoldOutException> {
+            queueService.enqueue("20230001", "010-1234-5678")
+        }
     }
 
     @Test

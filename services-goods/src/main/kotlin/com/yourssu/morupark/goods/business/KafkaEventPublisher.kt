@@ -18,7 +18,7 @@ class KafkaEventPublisher(
         when (event) {
             is TicketSuccessEvent -> ticketResultProducer.sendSuccess(event.waitingToken)
             is TicketFailedEvent  -> ticketResultProducer.sendFailed(event.waitingToken, event.reason.name)
-            is SoldOutEvent       -> ticketResultProducer.sendSoldOut()
+            is SoldOutEvent       -> ticketResultProducer.sendSoldOut(event.goodsId)
         }
     }
 }

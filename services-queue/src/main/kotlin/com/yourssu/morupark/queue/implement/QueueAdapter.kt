@@ -12,6 +12,7 @@ class QueueAdapter(
         private const val WAITING_KEY = "queue:waiting"
         private const val USER_HASH_KEY = "queue:user"
         private const val STATUS_HASH_KEY = "queue:status"
+        private fun soldOutKey(goodsId: Long) = "queue:soldOut:$goodsId"
     }
 
     fun addToWaitingQueue(waitingToken: String, studentId: String, phoneNumber: String, timestamp: Long) {
@@ -53,5 +54,13 @@ class QueueAdapter(
             redisTemplate.opsForZSet().remove(WAITING_KEY, *items.toTypedArray())
         }
         return items
+    }
+
+    fun saveSoldOut(goodsId: Long) {
+        redisTemplate.opsForValue().set(soldOutKey(goodsId), "true")
+    }
+
+    fun isSoldOut(goodsId: Long): Boolean {
+        return redisTemplate.opsForValue().get(soldOutKey(goodsId)) == "true"
     }
 }

@@ -4,4 +4,4 @@ sealed class TicketResultEvent
 
 data class TicketSuccessEvent(val waitingToken: String) : TicketResultEvent()
 data class TicketFailedEvent(val waitingToken: String, val reason: FailureReason) : TicketResultEvent()
-class SoldOutEvent : TicketResultEvent()
+data class SoldOutEvent(val goodsId: Long) : TicketResultEvent()
