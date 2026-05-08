@@ -50,7 +50,7 @@ class GoodsServiceTest {
     fun `당첨되고 재고 차감 성공 시 당첨 이벤트를 발행한다`() {
         // given
         val events = mutableListOf<Any>()
-        every { Random.Default.nextFloat() } returns 0.5f
+        every { Random.Default.nextFloat() } returns 0.01f
         every { goodsRepository.decrementStock(any()) } returns 1
         every { winnerRepository.save(any()) } returns Winner(studentId = studentId, phoneNumber = phoneNumber)
         every { eventPublisher.publishEvent(capture(events)) } just runs
@@ -67,7 +67,7 @@ class GoodsServiceTest {
     fun `당첨됐지만 재고 없음 시 SOLD_OUT 실패 이벤트와 SoldOutEvent를 발행한다`() {
         // given
         val events = mutableListOf<Any>()
-        every { Random.Default.nextFloat() } returns 0.5f
+        every { Random.Default.nextFloat() } returns 0.01f
         every { goodsRepository.decrementStock(any()) } returns 0
         every { goodsRepository.markSoldOut(any()) } returns 1
         every { eventPublisher.publishEvent(capture(events)) } just runs
@@ -77,14 +77,14 @@ class GoodsServiceTest {
 
         // then
         assertTrue(events.any { it == TicketFailedEvent(waitingToken, FailureReason.SOLD_OUT) })
-        assertTrue(events.any { it is SoldOutEvent })
+        assertTrue(events.any { it is SoldOutEvent && (it as SoldOutEvent).goodsId == 1L })
     }
 
     @Test
     fun `당첨됐지만 이미 SOLD_OUT 처리된 경우 SoldOutEvent를 발행하지 않는다`() {
         // given
         val events = mutableListOf<Any>()
-        every { Random.Default.nextFloat() } returns 0.5f
+        every { Random.Default.nextFloat() } returns 0.01f
         every { goodsRepository.decrementStock(any()) } returns 0
         every { goodsRepository.markSoldOut(any()) } returns 0
         every { eventPublisher.publishEvent(capture(events)) } just runs

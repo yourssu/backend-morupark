@@ -17,4 +17,14 @@ class GlobalExceptionHandler {
             )
         )
     }
+
+    @ExceptionHandler(SoldOutException::class)
+    fun handleSoldOutException(e: SoldOutException): ResponseEntity<Map<String, String>> {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+            mapOf(
+                "error" to "SoldOut",
+                "message" to "재고가 모두 소진되었습니다."
+            )
+        )
+    }
 }

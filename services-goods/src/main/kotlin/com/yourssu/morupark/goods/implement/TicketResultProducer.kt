@@ -19,7 +19,7 @@ class TicketResultProducer(
         kafkaTemplate.send(TOPIC, waitingToken, "$waitingToken|FAILED:$reason")
     }
 
-    fun sendSoldOut() {
-        kafkaTemplate.send(TOPIC, "SYSTEM", "SOLD_OUT")
+    fun sendSoldOut(goodsId: Long) {
+        kafkaTemplate.send(TOPIC, "SYSTEM", "SOLD_OUT:$goodsId")
     }
 }

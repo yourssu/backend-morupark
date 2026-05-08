@@ -18,6 +18,7 @@ class GoodsService(
     private val log = LoggerFactory.getLogger(this::class.java)
 
     companion object {
+        // TODO: 다중 상품 지원 시 WAITING Kafka 메시지 및 processTicket 파라미터에 goodsId 추가 필요
         private const val GOODS_ID = 1L
         private const val WIN_PROBABILITY = 0.05f
     }
@@ -42,7 +43,7 @@ class GoodsService(
             val marked = goodsRepository.markSoldOut(GOODS_ID)
             if (marked > 0) {
                 log.warn("[SERVICE] SOLD_OUT 처리")
-                eventPublisher.publishEvent(SoldOutEvent())
+                eventPublisher.publishEvent(SoldOutEvent(GOODS_ID))
             }
         }
     }
