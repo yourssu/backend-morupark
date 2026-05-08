@@ -13,4 +13,7 @@ interface JpaGoodsRepository : JpaRepository<GoodsEntity, Long> {
     @Modifying
     @Query("UPDATE GoodsEntity g SET g.soldOut = true WHERE g.id = :id AND g.soldOut = false")
     fun markSoldOut(id: Long): Int
+
+    @Query("SELECT g.soldOut FROM GoodsEntity g WHERE g.id = :id")
+    fun isSoldOut(id: Long): Boolean
 }

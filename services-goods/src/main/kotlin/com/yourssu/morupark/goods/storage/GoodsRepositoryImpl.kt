@@ -11,4 +11,6 @@ class GoodsRepositoryImpl(
     override fun decrementStock(id: Long): Int = jpaGoodsRepository.decrementStock(id)
 
     override fun markSoldOut(id: Long): Int = jpaGoodsRepository.markSoldOut(id)
+
+    override fun isSoldOut(id: Long): Boolean = jpaGoodsRepository.isSoldOut(id)
 }
