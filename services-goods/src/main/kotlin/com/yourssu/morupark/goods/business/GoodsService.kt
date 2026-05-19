@@ -1,5 +1,6 @@
 package com.yourssu.morupark.goods.business
 
+import com.yourssu.morupark.goods.implement.TicketDeduplicator
 import com.yourssu.morupark.goods.implement.TicketProcessor
 import com.yourssu.morupark.goods.implement.TicketValidator
 import org.slf4j.LoggerFactory
@@ -11,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional
 class GoodsService(
     private val ticketValidator: TicketValidator,
     private val ticketProcessor: TicketProcessor,
+    private val ticketDeduplicator: TicketDeduplicator,
     private val eventPublisher: ApplicationEventPublisher,
 ) {
     private val log = LoggerFactory.getLogger(this::class.java)
@@ -27,6 +29,11 @@ class GoodsService(
 
     @Transactional
     fun processTicket(waitingToken: String, studentId: String, phoneNumber: String) {
+        if (ticketDeduplicator.isDuplicate(waitingToken)) {
+            log.warn("[SERVICE] 중복 메시지 감지 - token: $waitingToken")
+            return
+        }
+
         if (ticketValidator.isSoldOut(GOODS_ID)) {
             log.warn("[SERVICE] 재고 없음 - token: $waitingToken")
             eventPublisher.publishEvent(TicketFailedEvent(waitingToken, FailureReason.SOLD_OUT))
