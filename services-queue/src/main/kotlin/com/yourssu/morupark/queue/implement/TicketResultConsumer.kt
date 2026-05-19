@@ -30,11 +30,12 @@ class TicketResultConsumer(
         if (message.startsWith("SOLD_OUT:")) {
             val goodsId = message.removePrefix("SOLD_OUT:").toLongOrNull() ?: return
             queueAdapter.saveSoldOut(goodsId)
-            val remaining = queueAdapter.popAllFromWaitingQueue()
-            log.warn("[CONSUMER] SOLD_OUT(goodsId=$goodsId) - 잔여 대기자 FAILED 처리: ${remaining?.size ?: 0}명")
-            remaining?.forEach { token ->
+            val remaining = queueAdapter.peekAllFromWaitingQueue().orEmpty()
+            log.warn("[CONSUMER] SOLD_OUT(goodsId=$goodsId) - 잔여 대기자 FAILED 처리: ${remaining.size}명")
+            remaining.forEach { token ->
                 queueAdapter.saveStatus(token, "${TicketStatus.FAILED.name}:${FailureReason.SOLD_OUT.name}")
             }
+            queueAdapter.removeFromWaitingQueue(remaining)
             return
         }
 

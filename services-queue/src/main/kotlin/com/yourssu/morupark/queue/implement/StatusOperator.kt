@@ -18,12 +18,16 @@ class StatusOperator(
 
     @Scheduled(fixedDelayString = "\${queue.processing-interval}")
     fun processQueue() {
-        val waitingTokens = queueAdapter.popFromWaitingQueue(maxSize)
+        val waitingTokens = queueAdapter.peekFromWaitingQueue(maxSize)
         if (waitingTokens.isNullOrEmpty()) return
 
         log.info("[SCHEDULER] 처리 시작 - 대상 수: ${waitingTokens.size}")
         for (waitingToken in waitingTokens) {
             queueAdapter.saveStatus(waitingToken, TicketStatus.PROCESSING.name)
+        }
+        queueAdapter.removeFromWaitingQueue(waitingTokens)
+
+        for (waitingToken in waitingTokens) {
             val userInfo = queueAdapter.getUserInfo(waitingToken) ?: continue
             val (studentId, phoneNumber) = userInfo.split("|")
             log.info("[SCHEDULER] Kafka 발행 - token: $waitingToken, studentId: $studentId")

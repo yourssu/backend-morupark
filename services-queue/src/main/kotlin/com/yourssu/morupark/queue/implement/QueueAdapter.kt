@@ -20,12 +20,13 @@ class QueueAdapter(
         redisTemplate.opsForHash<String, String>().put(USER_HASH_KEY, waitingToken, "$studentId|$phoneNumber")
     }
 
-    fun popFromWaitingQueue(count: Long): Set<String>? {
-        val items = redisTemplate.opsForZSet().range(WAITING_KEY, 0, count - 1)
-        if (!items.isNullOrEmpty()) {
-            redisTemplate.opsForZSet().remove(WAITING_KEY, *items.toTypedArray())
-        }
-        return items
+    fun peekFromWaitingQueue(count: Long): Set<String>? {
+        return redisTemplate.opsForZSet().range(WAITING_KEY, 0, count - 1)
+    }
+
+    fun removeFromWaitingQueue(waitingTokens: Set<String>) {
+        if (waitingTokens.isEmpty()) return
+        redisTemplate.opsForZSet().remove(WAITING_KEY, *waitingTokens.toTypedArray())
     }
 
     fun getUserInfo(waitingToken: String): String? {
@@ -48,12 +49,8 @@ class QueueAdapter(
         return redisTemplate.opsForHash<String, String>().get(STATUS_HASH_KEY, waitingToken)
     }
 
-    fun popAllFromWaitingQueue(): Set<String>? {
-        val items = redisTemplate.opsForZSet().range(WAITING_KEY, 0, -1)
-        if (!items.isNullOrEmpty()) {
-            redisTemplate.opsForZSet().remove(WAITING_KEY, *items.toTypedArray())
-        }
-        return items
+    fun peekAllFromWaitingQueue(): Set<String>? {
+        return redisTemplate.opsForZSet().range(WAITING_KEY, 0, -1)
     }
 
     fun saveSoldOut(goodsId: Long) {
