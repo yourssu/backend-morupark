@@ -1,6 +1,7 @@
 package com.yourssu.morupark.goods.unit
 
 import com.yourssu.morupark.goods.business.*
+import com.yourssu.morupark.goods.implement.TicketDeduplicator
 import com.yourssu.morupark.goods.implement.TicketProcessor
 import com.yourssu.morupark.goods.implement.TicketValidator
 import io.mockk.*
@@ -22,6 +23,9 @@ class GoodsServiceTest {
     private lateinit var ticketProcessor: TicketProcessor
 
     @MockK
+    private lateinit var ticketDeduplicator: TicketDeduplicator
+
+    @MockK
     private lateinit var eventPublisher: ApplicationEventPublisher
 
     @InjectMockKs
@@ -35,6 +39,7 @@ class GoodsServiceTest {
     fun `이미 품절된 경우 당첨 판정 없이 SOLD_OUT 실패 이벤트를 발행한다`() {
         // given
         val events = mutableListOf<Any>()
+        every { ticketDeduplicator.isDuplicate(waitingToken) } returns false
         every { ticketValidator.isSoldOut(any()) } returns true
         every { eventPublisher.publishEvent(capture(events)) } just runs
 
@@ -51,6 +56,7 @@ class GoodsServiceTest {
     fun `낙첨 시 LOST 실패 이벤트를 발행한다`() {
         // given
         val events = mutableListOf<Any>()
+        every { ticketDeduplicator.isDuplicate(waitingToken) } returns false
         every { ticketValidator.isSoldOut(any()) } returns false
         every { ticketValidator.isWinner() } returns false
         every { eventPublisher.publishEvent(capture(events)) } just runs
@@ -66,6 +72,7 @@ class GoodsServiceTest {
     @Test
     fun `당첨 시 TicketProcessor에 처리를 위임한다`() {
         // given
+        every { ticketDeduplicator.isDuplicate(waitingToken) } returns false
         every { ticketValidator.isSoldOut(any()) } returns false
         every { ticketValidator.isWinner() } returns true
         every { ticketProcessor.process(any(), any(), any(), any()) } just runs
@@ -75,5 +82,20 @@ class GoodsServiceTest {
 
         // then
         verify { ticketProcessor.process(waitingToken, studentId, phoneNumber, 1L) }
+    }
+
+    @Test
+    fun `이미 처리된 토큰은 무시하고 어떤 분기도 타지 않는다`() {
+        // given
+        every { ticketDeduplicator.isDuplicate(waitingToken) } returns true
+
+        // when
+        goodsService.processTicket(waitingToken, studentId, phoneNumber)
+
+        // then
+        verify(exactly = 0) { ticketValidator.isSoldOut(any()) }
+        verify(exactly = 0) { ticketValidator.isWinner() }
+        verify(exactly = 0) { ticketProcessor.process(any(), any(), any(), any()) }
+        verify(exactly = 0) { eventPublisher.publishEvent(any()) }
     }
 }
