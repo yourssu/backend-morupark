@@ -33,13 +33,13 @@ class QueueService(
 
     fun getStatus(waitingToken: String): TicketStatusResponse {
         if (queueAdapter.isInQueue(waitingToken)) {
-            return getWaitingStatusResult(waitingToken)
+            return getWaitingStatusResult(waitingToken) ?: getStatusResult(waitingToken)
         }
         return getStatusResult(waitingToken)
     }
 
-    private fun getWaitingStatusResult(waitingToken: String): TicketStatusResponse {
-        val rank = queueAdapter.getRank(waitingToken)!!
+    private fun getWaitingStatusResult(waitingToken: String): TicketStatusResponse? {
+        val rank = queueAdapter.getRank(waitingToken) ?: return null
         val estimatedWaitSeconds = waitingTimeEstimator.estimateWaitingTime(rank)
         return TicketStatusResponse(
             status = TicketStatus.WAITING,
